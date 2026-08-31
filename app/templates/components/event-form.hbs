@@ -34,6 +34,11 @@
       </div>
       <div class="form-group">
         <label class="control-label">Participants</label>
+        <p class="help-block">
+          The number next to each name is their <strong>factor</strong> &mdash; how much of the
+          bill they count for when costs are split. Leave it at 1 for a regular adult, or lower it
+          for e.g. a child (0.5) or raise it for e.g. a family entered as one person (3).
+        </p>
         {{user-list users=event.users}}
         <button type="button" class="btn btn-primary add-user" {{action "addUser"}}>Add Participant</button>
       </div>
