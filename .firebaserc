@@ -1,8 +1,8 @@
 {
   "projects": {
-    "staging": "splittypie-staging",
-    "offline": "splittypie-offline",
-    "dev": "splittypie-dev",
-    "prod": "splittypie"
+    "staging": "splittypieext-6e226",
+    "offline": "splittypieext-6e226",
+    "dev": "splittypieext-6e226",
+    "prod": "splittypieext-6e226"
   }
 }

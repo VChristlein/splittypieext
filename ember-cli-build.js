@@ -1,4 +1,12 @@
 /*eslint-disable */
+const util = require("util");
+
+// util.isRegExp was removed from Node core; the production build's CSS
+// minifier (clean-css@3, an old transitive dependency) still calls it.
+if (!util.isRegExp) {
+    util.isRegExp = value => Object.prototype.toString.call(value) === "[object RegExp]";
+}
+
 const EmberApp = require("ember-cli/lib/broccoli/ember-app");
 const env = process.env.EMBER_ENV;
 
