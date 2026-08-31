@@ -1,7 +1,6 @@
 import {
   setProperties,
   getProperties,
-  set,
   get
 } from "@ember/object";
 import { validator, buildValidations } from "ember-cp-validations";
@@ -15,6 +14,11 @@ const Validations = buildValidations({
             validator("length", { max: 50 }),
         ],
     },
+    factor: {
+        validators: [
+            validator("number", { allowString: true, allowBlank: true, gt: 0 }),
+        ],
+    },
 });
 
 export default FormObject.extend(Validations, {
@@ -24,12 +28,12 @@ export default FormObject.extend(Validations, {
         this._super(...arguments);
         const model = get(this, "model");
 
-        set(this, "name", get(model, "name"));
+        setProperties(this, getProperties(model, "name", "factor"));
     },
 
     updateModelAttributes() {
         const model = get(this, "model");
 
-        setProperties(model, getProperties(this, "name"));
+        setProperties(model, getProperties(this, "name", "factor"));
     },
 });

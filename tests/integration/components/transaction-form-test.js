@@ -9,7 +9,7 @@ moduleForComponent("transaction-form", "Integration | Component | transaction fo
 });
 
 test("it renders", function (assert) {
-    assert.expect(4);
+    assert.expect(5);
 
     this.render(hbs`{{transaction-form}}`);
 
@@ -17,10 +17,11 @@ test("it renders", function (assert) {
     assert.equal(this.$(".transaction-name").val(), "");
     assert.equal(this.$(".transaction-name").attr("placeholder"), "Example: Tickets to museum");
     assert.equal(this.$(".transaction-amount").val(), "");
+    assert.equal(this.$(".transaction-obey-factors").is(":checked"), false);
 });
 
 test("it renders with transaction model", function (assert) {
-    assert.expect(4);
+    assert.expect(5);
 
     const users = [
         { id: 1, name: "Bob" },
@@ -33,6 +34,7 @@ test("it renders with transaction model", function (assert) {
         name: "Gift for Alice",
         amount: "200",
         participants: users.slice(1),
+        obeyFactors: false,
     });
 
     this.set("users", users);
@@ -43,4 +45,5 @@ test("it renders with transaction model", function (assert) {
     assert.equal(this.$(".transaction-name").val(), "Gift for Alice");
     assert.equal(this.$(".transaction-amount").val(), "200");
     assert.equal(this.$(".transaction-participants").find(":checked").length, 2);
+    assert.equal(this.$(".transaction-obey-factors").is(":checked"), false);
 });

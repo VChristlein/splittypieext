@@ -13,6 +13,7 @@ export default Model.extend(ModelMixin, {
     payer: belongsTo("user", { async: false }),
     participants: hasMany("user", { async: false }),
     type: attr("string", { defaultValue: "expense" }),
+    obeyFactors: attr("boolean", { defaultValue: true }),
     typeOrDefault: computed("type", {
         // FIXME: I don't like this typeOrDefault
         get() {

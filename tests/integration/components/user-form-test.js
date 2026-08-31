@@ -21,3 +21,15 @@ test("it renders with user model", function (assert) {
 
     assert.equal(this.$(".user-name").val(), "John");
 });
+
+test("it renders with user's factor", function (assert) {
+    const user = {
+        name: "John",
+        factor: 0.5,
+    };
+
+    this.set("user", user);
+    this.render(hbs`{{user-form user=user}}`);
+
+    assert.equal(this.$(".user-factor").val(), "0.5");
+});

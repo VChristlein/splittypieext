@@ -65,6 +65,13 @@
         <div class="help-block with-errors">
           {{transaction.formErrors.participants.message}}
         </div>
+
+        <div class="checkbox">
+          <label>
+            {{input type="checkbox" class="transaction-obey-factors" checked=transaction.obeyFactors}}
+            Obey factors
+          </label>
+        </div>
       </div>
 
       {{#unless transaction.isNew}}

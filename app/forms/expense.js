@@ -39,7 +39,10 @@ export default FormObject.extend(Validations, {
 
         setProperties(
             this,
-            getProperties(model, "name", "isTransfer", "date", "amount", "payer", "participants")
+            getProperties(
+                model,
+                "name", "isTransfer", "date", "amount", "payer", "participants", "obeyFactors"
+            )
         );
         set(this, "participants", getWithDefault(model, "participants", []).toArray());
     },
@@ -49,7 +52,10 @@ export default FormObject.extend(Validations, {
 
         setProperties(
             model,
-            getProperties(this, "name", "date", "amount", "payer", "participants")
+            getProperties(
+                this,
+                "name", "date", "amount", "payer", "participants", "obeyFactors"
+            )
         );
     },
 });
