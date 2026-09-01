@@ -47,3 +47,29 @@ test("it renders with transaction model", function (assert) {
     assert.equal(this.$(".transaction-participants").find(":checked").length, 2);
     assert.equal(this.$(".transaction-obey-factors").is(":checked"), false);
 });
+
+test("it shows an editable factor per participant when obeying factors", function (assert) {
+    assert.expect(3);
+
+    const john = { id: 2, name: "John" };
+    const billy = { id: 3, name: "Billy" };
+
+    const transaction = EmberObject.create({
+        payer: john,
+        name: "Gift for Alice",
+        amount: "200",
+        participants: [john, billy],
+        obeyFactors: true,
+        participantFactorEntries: [
+            EmberObject.create({ participant: john, factor: 1 }),
+            EmberObject.create({ participant: billy, factor: 0.5 }),
+        ],
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
+
+    assert.equal(this.$(".transaction-participant-factors li").length, 2);
+    assert.equal(this.$(".transaction-participant-factors .participant-factor").eq(0).val(), "1");
+    assert.equal(this.$(".transaction-participant-factors .participant-factor").eq(1).val(), "0.5");
+});

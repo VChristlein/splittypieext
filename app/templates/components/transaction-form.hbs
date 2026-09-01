@@ -72,6 +72,19 @@
             Obey factors
           </label>
         </div>
+
+        {{#if transaction.obeyFactors}}
+          <ul class="list-unstyled transaction-participant-factors">
+            {{#each transaction.participantFactorEntries as |entry|}}
+              <li>
+                <label>
+                  {{entry.participant.name}}
+                  {{input type="number" step="0.1" min="0" class="participant-factor" value=entry.factor}}
+                </label>
+              </li>
+            {{/each}}
+          </ul>
+        {{/if}}
       </div>
 
       {{#unless transaction.isNew}}

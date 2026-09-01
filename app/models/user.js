@@ -18,7 +18,7 @@ export default Model.extend(ModelMixin, {
     }),
 
     balance: computed(
-        "event.transactions.{[],@each.amount,@each.payer,@each.participants,@each.obeyFactors}",
+        "event.transactions.{[],@each.amount,@each.payer,@each.participants,@each.obeyFactors,@each.participantFactors}",
         "event.users.@each.factor",
         function () {
             const transactions = get(this, "event.transactions");
@@ -30,7 +30,6 @@ export default Model.extend(ModelMixin, {
                 (acc, t) => acc + parseFloat(get(t, "amount")),
                 0
             );
-            const myFactor = get(this, "factorOrDefault");
             const owedMoney = owedTransactions.reduce((acc, t) => {
                 const participants = get(t, "participants");
                 const amount = parseFloat(get(t, "amount"));
@@ -39,12 +38,20 @@ export default Model.extend(ModelMixin, {
                     return acc + (amount / participants.length);
                 }
 
+                // a transaction may override a participant's usual factor
+                // just for itself, e.g. only 1 of a family of 3 had a drink
+                const participantFactors = get(t, "participantFactors") || {};
+                const factorFor = (p) => {
+                    const override = parseFloat(participantFactors[get(p, "id")]);
+
+                    return override > 0 ? override : get(p, "factorOrDefault");
+                };
                 const totalFactor = participants.reduce(
-                    (sum, p) => sum + get(p, "factorOrDefault"),
+                    (sum, p) => sum + factorFor(p),
                     0
                 );
 
-                return acc + (amount * myFactor / totalFactor);
+                return acc + (amount * factorFor(this) / totalFactor);
             }, 0);
 
             return (paidMoney - owedMoney).toFixed(2);

@@ -115,3 +115,50 @@ test("it splits cost evenly when a transaction opts out of factors", function (a
     assert.equal(bob.get("balance"), (-(90 / 3)).toFixed(2));
     assert.equal(child.get("balance"), (-(90 / 3)).toFixed(2));
 });
+
+test("it lets a transaction override a participant's factor just for itself", function (assert) {
+    const store = this.store();
+    let bob;
+    let family;
+
+    run(() => {
+        const event = store.createRecord("event", {
+            name: "Test event",
+        });
+        bob = this.subject();
+        family = store.createRecord("user", {
+            name: "Family",
+            factor: 3,
+            event,
+        });
+
+        // dinner: everyone in the family ate, so the usual factor of 3 applies
+        const dinner = store.createRecord("transaction", {
+            name: "Dinner",
+            amount: 100,
+            payer: bob,
+            participants: [bob, family],
+        });
+
+        // drinks: only 1 family member had a drink, so override their factor
+        // for this transaction alone, down from their usual 3 to 1
+        const drinks = store.createRecord("transaction", {
+            name: "Round of drinks",
+            amount: 20,
+            payer: bob,
+            participants: [bob, family],
+            participantFactors: { [family.get("id")]: 1 },
+        });
+
+        bob.set("event", event);
+        event.get("transactions").pushObjects([dinner, drinks]);
+    });
+
+    // dinner: total factor = 1 (bob) + 3 (family) = 4
+    // drinks: total factor = 1 (bob) + 1 (family override) = 2
+    const bobOwes = (100 * 1 / 4) + (20 * 1 / 2);
+    const familyOwes = (100 * 3 / 4) + (20 * 1 / 2);
+
+    assert.equal(bob.get("balance"), (120 - bobOwes).toFixed(2));
+    assert.equal(family.get("balance"), (-familyOwes).toFixed(2));
+});

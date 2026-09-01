@@ -14,6 +14,8 @@ export default Model.extend(ModelMixin, {
     participants: hasMany("user", { async: false }),
     type: attr("string", { defaultValue: "expense" }),
     obeyFactors: attr("boolean", { defaultValue: true }),
+    // per-transaction override of each participant's factor, keyed by user id
+    participantFactors: attr({ defaultValue: () => ({}) }),
     typeOrDefault: computed("type", {
         // FIXME: I don't like this typeOrDefault
         get() {

@@ -1,5 +1,6 @@
 import { oneWay } from "@ember/object/computed";
-import {
+import EmberObject, {
+  computed,
   getWithDefault,
   setProperties,
   getProperties,
@@ -45,10 +46,45 @@ export default FormObject.extend(Validations, {
             )
         );
         set(this, "participants", getWithDefault(model, "participants", []).toArray());
+        set(this, "_factorOverrides", Object.assign({}, getWithDefault(model, "participantFactors", {})));
     },
+
+    // one editable row per selected participant, showing their usual factor
+    // (or this transaction's override, if one was already set) which can be
+    // tweaked just for this transaction without touching their global factor
+    participantFactorEntries: computed("participants.[]", function () {
+        const overrides = get(this, "_factorOverrides");
+
+        return get(this, "participants").map((participant) => {
+            const id = get(participant, "id");
+
+            if (!(id in overrides)) {
+                overrides[id] = get(participant, "factorOrDefault") || 1;
+            }
+
+            return EmberObject.extend({
+                factor: computed({
+                    get() {
+                        return overrides[id];
+                    },
+                    set(key, value) {
+                        overrides[id] = value;
+
+                        return value;
+                    },
+                }),
+            }).create({ participant });
+        });
+    }),
 
     updateModelAttributes() {
         const model = get(this, "model");
+        const overrides = get(this, "_factorOverrides");
+        const participantFactors = {};
+
+        get(this, "participants").forEach((participant) => {
+            participantFactors[get(participant, "id")] = overrides[get(participant, "id")];
+        });
 
         setProperties(
             model,
@@ -57,5 +93,6 @@ export default FormObject.extend(Validations, {
                 "name", "date", "amount", "payer", "participants", "obeyFactors"
             )
         );
+        set(model, "participantFactors", participantFactors);
     },
 });
