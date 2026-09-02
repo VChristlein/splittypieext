@@ -35,6 +35,7 @@ test("it renders with transaction model", function (assert) {
         amount: "200",
         participants: users.slice(1),
         obeyFactors: false,
+        requiresParticipants: true,
     });
 
     this.set("users", users);
@@ -46,6 +47,42 @@ test("it renders with transaction model", function (assert) {
     assert.equal(this.$(".transaction-amount").val(), "200");
     assert.equal(this.$(".transaction-participants").find(":checked").length, 2);
     assert.equal(this.$(".transaction-obey-factors").is(":checked"), false);
+});
+
+test("it offers expense, donation and deposit as transaction types", function (assert) {
+    assert.expect(4);
+
+    const transaction = EmberObject.create({
+        payer: { id: 1, name: "Bob" },
+        type: "donation",
+        selectedTransactionType: { value: "donation", label: "Donation (e.g. birthday gift)" },
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
+
+    assert.equal(this.$(".transaction-type option").length, 3);
+    assert.equal(this.$(".transaction-type option").eq(0).text().trim(), "Expense");
+    assert.equal(this.$(".transaction-type select").val(), "donation");
+    assert.equal(this.$(".transaction-type").find(":selected").text().trim(), "Donation (e.g. birthday gift)");
+});
+
+test("it hides the participants section for donations and deposits", function (assert) {
+    assert.expect(2);
+
+    const transaction = EmberObject.create({
+        payer: { id: 1, name: "Bob" },
+        name: "Alice's birthday gift",
+        amount: "20",
+        type: "donation",
+        requiresParticipants: false,
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
+
+    assert.equal(this.$(".transaction-participants").length, 0);
+    assert.equal(this.$(".transaction-obey-factors").length, 0);
 });
 
 test("it shows an editable factor per participant when obeying factors", function (assert) {
@@ -60,6 +97,7 @@ test("it shows an editable factor per participant when obeying factors", functio
         amount: "200",
         participants: [john, billy],
         obeyFactors: true,
+        requiresParticipants: true,
         participantFactorEntries: [
             EmberObject.create({ participant: john, factor: 1 }),
             EmberObject.create({ participant: billy, factor: 0.5 }),

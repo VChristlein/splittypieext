@@ -162,3 +162,63 @@ test("it lets a transaction override a participant's factor just for itself", fu
     assert.equal(bob.get("balance"), (120 - bobOwes).toFixed(2));
     assert.equal(family.get("balance"), (-familyOwes).toFixed(2));
 });
+
+test("a donation only credits the contributor, nobody owes it back", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+
+    run(() => {
+        const event = store.createRecord("event", {
+            name: "Test event",
+        });
+        alice = this.subject();
+        bob = store.createRecord("user", {
+            name: "Bob",
+            event,
+        });
+        const donation = store.createRecord("transaction", {
+            type: "donation",
+            name: "Alice's birthday gift",
+            amount: 20,
+            payer: bob,
+            participants: [],
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObject(donation);
+    });
+
+    assert.equal(bob.get("balance"), (20).toFixed(2));
+    assert.equal(alice.get("balance"), (0).toFixed(2));
+});
+
+test("a deposit only credits the depositor, nobody owes it back", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+
+    run(() => {
+        const event = store.createRecord("event", {
+            name: "Test event",
+        });
+        alice = this.subject();
+        bob = store.createRecord("user", {
+            name: "Bob",
+            event,
+        });
+        const deposit = store.createRecord("transaction", {
+            type: "deposit",
+            name: "Flat prepayment",
+            amount: 500,
+            payer: bob,
+            participants: [],
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObject(deposit);
+    });
+
+    assert.equal(bob.get("balance"), (500).toFixed(2));
+    assert.equal(alice.get("balance"), (0).toFixed(2));
+});

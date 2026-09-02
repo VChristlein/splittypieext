@@ -1,4 +1,4 @@
-import { oneWay } from "@ember/object/computed";
+import { equal, not, oneWay } from "@ember/object/computed";
 import EmberObject, {
   computed,
   getWithDefault,
@@ -10,6 +10,12 @@ import EmberObject, {
 import { validator, buildValidations } from "ember-cp-validations";
 
 import FormObject from "./form-object";
+
+export const TRANSACTION_TYPES = [
+    { value: "expense", label: "Expense" },
+    { value: "donation", label: "Donation (e.g. birthday gift)" },
+    { value: "deposit", label: "Deposit (e.g. prepayment)" },
+];
 
 const Validations = buildValidations({
     name: {
@@ -25,7 +31,12 @@ const Validations = buildValidations({
         ],
     },
     payer: validator("presence", true),
-    participants: validator("presence", true),
+    participants: validator("presence", {
+        presence: true,
+        // a donation/deposit is a one-way contribution to the pot, not
+        // split among anyone, so it doesn't need any participants
+        disabled: not("model.requiresParticipants"),
+    }),
 });
 
 export default FormObject.extend(Validations, {
@@ -33,6 +44,26 @@ export default FormObject.extend(Validations, {
 
     event: oneWay("model.event"),
     isSaving: oneWay("event.isSaving"),
+
+    requiresParticipants: equal("type", "expense"),
+
+    selectedTransactionType: computed("type", {
+        get() {
+            return TRANSACTION_TYPES.findBy("value", get(this, "type"));
+        },
+        set(key, option) {
+            set(this, "type", get(option, "value"));
+
+            return option;
+        },
+    }),
+
+    payerLabel: computed("type", function () {
+        return {
+            donation: "Who's donating?",
+            deposit: "Who's depositing?",
+        }[get(this, "type")] || "Who paid?";
+    }),
 
     init() {
         this._super(...arguments);
@@ -42,7 +73,8 @@ export default FormObject.extend(Validations, {
             this,
             getProperties(
                 model,
-                "name", "isTransfer", "date", "amount", "payer", "participants", "obeyFactors"
+                "name", "isTransfer", "date", "amount", "payer", "participants", "obeyFactors",
+                "type"
             )
         );
         set(this, "participants", getWithDefault(model, "participants", []).toArray());
@@ -79,20 +111,23 @@ export default FormObject.extend(Validations, {
 
     updateModelAttributes() {
         const model = get(this, "model");
+        const requiresParticipants = get(this, "requiresParticipants");
         const overrides = get(this, "_factorOverrides");
         const participantFactors = {};
 
-        get(this, "participants").forEach((participant) => {
-            participantFactors[get(participant, "id")] = overrides[get(participant, "id")];
-        });
+        if (requiresParticipants) {
+            get(this, "participants").forEach((participant) => {
+                participantFactors[get(participant, "id")] = overrides[get(participant, "id")];
+            });
+        }
 
         setProperties(
             model,
-            getProperties(
-                this,
-                "name", "date", "amount", "payer", "participants", "obeyFactors"
-            )
+            getProperties(this, "name", "date", "amount", "payer", "obeyFactors", "type")
         );
+        // a donation/deposit isn't split among anyone, regardless of
+        // whatever participants were picked before switching to that type
+        set(model, "participants", requiresParticipants ? get(this, "participants") : []);
         set(model, "participantFactors", participantFactors);
     },
 });

@@ -34,3 +34,49 @@ test("it renders", function (assert) {
         "John paid for Gift for Alice John, Billy 200.00 USD"
     );
 });
+
+test("it renders a donation", function (assert) {
+    assert.expect(1);
+
+    const transaction = EmberObject.create({
+        payer: { id: 1, name: "Bob" },
+        name: "Alice's birthday gift",
+        amount: "20",
+        participants: [],
+        isDonation: true,
+        event: {
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-list-item transaction=transaction}}`);
+
+    assert.equal(
+        extraTrim(this.$().text()),
+        "Bob donated to the pot for Alice's birthday gift 20.00 USD"
+    );
+});
+
+test("it renders a deposit", function (assert) {
+    assert.expect(1);
+
+    const transaction = EmberObject.create({
+        payer: { id: 1, name: "Bob" },
+        name: "Flat prepayment",
+        amount: "500",
+        participants: [],
+        isDeposit: true,
+        event: {
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-list-item transaction=transaction}}`);
+
+    assert.equal(
+        extraTrim(this.$().text()),
+        "Bob deposited for Flat prepayment 500.00 USD"
+    );
+});

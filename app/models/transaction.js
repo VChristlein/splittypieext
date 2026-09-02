@@ -1,4 +1,4 @@
-import { equal } from "@ember/object/computed";
+import { equal, or } from "@ember/object/computed";
 import { get, computed } from "@ember/object";
 import ModelMixin from "splittypie/mixins/model-mixin";
 import Model from "ember-data/model";
@@ -34,4 +34,9 @@ export default Model.extend(ModelMixin, {
     }),
 
     isTransfer: equal("type", "transfer"),
+    isDonation: equal("type", "donation"),
+    isDeposit: equal("type", "deposit"),
+    // a one-way contribution into the pot: only the contributor's balance
+    // moves, nobody is considered to owe it back
+    isContribution: or("isDonation", "isDeposit"),
 });

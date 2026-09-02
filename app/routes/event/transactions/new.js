@@ -27,6 +27,7 @@ export default Route.extend({
             name,
             participants,
             payer,
+            type: "expense",
         });
     },
 

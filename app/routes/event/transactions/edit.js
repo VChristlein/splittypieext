@@ -12,8 +12,10 @@ export default Route.extend({
 
     setupController(controller, model) {
         this._super(controller, model);
-        const type = get(model, "typeOrDefault");
-        const form = get(this, "formFactory").createForm(type, model);
+        // donations/deposits are edited with the same form as expenses,
+        // just with a different type selected
+        const formName = get(model, "isTransfer") ? "transfer" : "expense";
+        const form = get(this, "formFactory").createForm(formName, model);
         setProperties(controller, {
             form,
             users: get(this.modelFor("event"), "users"),
