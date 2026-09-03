@@ -83,3 +83,30 @@ test("it renders a deposit", function (assert) {
         "Deposit for Flat prepayment Bob (250), Alice (100) 350.00 USD"
     );
 });
+
+test("it renders an itemized expense", function (assert) {
+    assert.expect(1);
+
+    const bob = { id: 1, name: "Bob" };
+    const alice = { id: 2, name: "Alice" };
+
+    const transaction = EmberObject.create({
+        payer: bob,
+        name: "Groceries",
+        amount: "45",
+        isItemized: true,
+        contributions: { 1: 15, 2: 30 },
+        event: {
+            users: [bob, alice],
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-list-item transaction=transaction}}`);
+
+    assert.equal(
+        extraTrim(this.$().text()),
+        "Bob paid for Groceries Bob (15), Alice (30) 45.00 USD"
+    );
+});

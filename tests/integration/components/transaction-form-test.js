@@ -60,7 +60,7 @@ test("it offers expense, donation and deposit as transaction types", function (a
     this.set("transaction", transaction);
     this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
 
-    assert.equal(this.$(".transaction-type option").length, 3);
+    assert.equal(this.$(".transaction-type option").length, 4);
     assert.equal(this.$(".transaction-type option").eq(0).text().trim(), "Expense");
     assert.equal(this.$(".transaction-type select").val(), "donation");
     assert.equal(this.$(".transaction-type").find(":selected").text().trim(), "Donation (e.g. birthday gift)");
@@ -101,6 +101,7 @@ test("it shows an amount per person instead of a split for deposits", function (
         name: "Flat prepayment",
         type: "deposit",
         isDeposit: true,
+        usesContributionEntries: true,
         totalContributions: 250,
         contributionEntries: [
             EmberObject.create({ user: bob, amount: 150 }),
@@ -120,6 +121,42 @@ test("it shows an amount per person instead of a split for deposits", function (
     assert.equal(this.$(".transaction-contributions li").length, 2);
     assert.equal(this.$(".transaction-contributions .contribution-amount").eq(0).val(), "150");
     assert.equal(this.$(".transaction-contributions-total").text().trim(), "Total: 250.00 USD");
+});
+
+test("it keeps the payer but swaps the split for exact amounts on an itemized expense", function (assert) {
+    assert.expect(6);
+
+    const alice = { id: 1, name: "Alice" };
+    const bob = { id: 2, name: "Bob" };
+
+    const transaction = EmberObject.create({
+        payer: alice,
+        name: "Groceries",
+        type: "itemized",
+        usesContributionEntries: true,
+        contributionsLabel: "How much does each person owe?",
+        totalContributions: 45,
+        contributionEntries: [
+            EmberObject.create({ user: alice, amount: 15 }),
+            EmberObject.create({ user: bob, amount: 30 }),
+        ],
+        event: {
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
+
+    assert.equal(this.$(".transaction-payer").length, 1);
+    assert.equal(this.$(".transaction-amount").length, 0);
+    assert.equal(this.$(".transaction-participants").length, 0);
+    assert.equal(this.$(".transaction-contributions li").length, 2);
+    assert.equal(
+        this.$(".transaction-contributions").closest(".form-group").find(".control-label").text().trim(),
+        "How much does each person owe?"
+    );
+    assert.equal(this.$(".transaction-contributions-total").text().trim(), "Total: 45.00 USD");
 });
 
 test("it shows an editable factor per participant when obeying factors", function (assert) {

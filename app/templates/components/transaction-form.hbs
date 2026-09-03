@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      {{#unless transaction.isDeposit}}
+      {{#unless transaction.usesContributionEntries}}
         <div class="form-group {{if transaction.formErrors.amount.message "has-error"}}">
           <label class="control-label">How much?</label>
           <div class="input-group">
@@ -68,9 +68,9 @@
         </div>
       </div>
 
-      {{#if transaction.isDeposit}}
+      {{#if transaction.usesContributionEntries}}
         <div class="form-group">
-          <label class="control-label">How much has each person already put in?</label>
+          <label class="control-label">{{transaction.contributionsLabel}}</label>
           <ul class="list-unstyled transaction-contributions">
             {{#each transaction.contributionEntries as |entry|}}
               <li>

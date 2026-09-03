@@ -25,11 +25,17 @@ export default Model.extend(ModelMixin, {
             // a deposit isn't a single payer split among participants - it's
             // each person's own already-contributed amount, so it's handled
             // separately below instead of through the payer/participants math
-            const splittableTransactions = transactions.rejectBy("isDeposit");
             const depositTransactions = transactions.filterBy("isDeposit");
+            // an itemized expense has a real payer (handled below, same as
+            // any other expense) but each participant's share is entered
+            // directly instead of derived from a factor
+            const itemizedTransactions = transactions.filterBy("isItemized");
+            const factorBasedTransactions = transactions.reject(
+                t => get(t, "isDeposit") || get(t, "isItemized")
+            );
 
-            const paidTransactions = splittableTransactions.filterBy("payer", this);
-            const owedTransactions = splittableTransactions.filter(
+            const paidTransactions = transactions.rejectBy("isDeposit").filterBy("payer", this);
+            const owedTransactions = factorBasedTransactions.filter(
                 t => get(t, "participants").includes(this)
             );
             // a donation flows the other way: the contributor's balance goes
@@ -77,7 +83,16 @@ export default Model.extend(ModelMixin, {
                 return acc + (myContribution > 0 ? myContribution : 0);
             }, 0);
 
-            return (paidMoney - owedMoney + depositCredit).toFixed(2);
+            // an itemized expense debits each person exactly the amount
+            // assigned to them, with no factor involved
+            const itemizedOwed = itemizedTransactions.reduce((acc, t) => {
+                const contributions = get(t, "contributions") || {};
+                const myShare = parseFloat(contributions[get(this, "id")]);
+
+                return acc + (myShare > 0 ? myShare : 0);
+            }, 0);
+
+            return (paidMoney - owedMoney - itemizedOwed + depositCredit).toFixed(2);
         }
     ),
 });

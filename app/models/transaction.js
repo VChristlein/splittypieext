@@ -16,8 +16,10 @@ export default Model.extend(ModelMixin, {
     obeyFactors: attr("boolean", { defaultValue: true }),
     // per-transaction override of each participant's factor, keyed by user id
     participantFactors: attr({ defaultValue: () => ({}) }),
-    // for a deposit: how much each user already contributed, keyed by user
-    // id - each person's own entered amount, not a total split any way
+    // per-user amount, keyed by user id, entered directly rather than
+    // computed by dividing anything - for a deposit, how much each person
+    // already put in (credited); for an itemized expense, how much each
+    // person specifically owes the payer (debited)
     contributions: attr({ defaultValue: () => ({}) }),
     typeOrDefault: computed("type", {
         // FIXME: I don't like this typeOrDefault
@@ -41,4 +43,8 @@ export default Model.extend(ModelMixin, {
     // credits them instead of debiting them - see models/user.js#balance
     isDonation: equal("type", "donation"),
     isDeposit: equal("type", "deposit"),
+    // like a deposit, each amount is entered directly per person instead of
+    // computed from a factor, but this one has a real payer who gets
+    // credited the total, same as a regular expense
+    isItemized: equal("type", "itemized"),
 });

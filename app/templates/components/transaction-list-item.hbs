@@ -7,6 +7,9 @@
   {{else if transaction.isDeposit}}
     Deposit for <em>{{transaction.name}}</em><br>
     {{inline-svg "user" class="icon"}} <small>{{contributors}}</small>
+  {{else if transaction.isItemized}}
+    <strong>{{transaction.payer.name}}</strong> paid for <em>{{transaction.name}}</em><br>
+    {{inline-svg "user" class="icon"}} <small>{{contributors}}</small>
   {{else}}
     <strong>{{transaction.payer.name}}</strong> {{verb}} <em>{{transaction.name}}</em><br>
     {{inline-svg "user" class="icon"}} <small>{{participants}}</small>

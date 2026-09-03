@@ -6,7 +6,7 @@ moduleForModel("event", "Unit | Utility | export event to excel", {
     needs: ["model:user", "model:transaction", "model:currency"],
 });
 
-test("it lists each transaction with per-person factors and totals", function (assert) {
+test("it lists each transaction with per-person factors, and formulas for the totals", function (assert) {
     const store = this.store();
     let event;
 
@@ -33,49 +33,25 @@ test("it lists each transaction with per-person factors and totals", function (a
         sheet.getRow(1).values.slice(1),
         ["Paid by", "Type", "Name", "Amount", "Alice", "Bob", "Sum of factors", "Individual amount"]
     );
-    assert.deepEqual(
-        sheet.getRow(2).values.slice(1),
-        ["Alice", "Expense", "Dinner", 30, 1, 0.5, 1.5, 20]
-    );
+
+    const row = sheet.getRow(2);
+
+    assert.equal(row.getCell(1).value, "Alice");
+    assert.equal(row.getCell(2).value, "Expense");
+    assert.equal(row.getCell(3).value, "Dinner");
+    assert.equal(row.getCell(4).value, 30);
+    assert.equal(row.getCell(5).value, 1);
+    assert.equal(row.getCell(6).value, 0.5);
+
+    // sum of factors and individual amount are live formulas, not plain
+    // numbers, so they keep recalculating if someone edits a factor
+    assert.equal(row.getCell(7).formula, "SUM(E2:F2)");
+    assert.equal(row.getCell(7).result, 1.5);
+    assert.equal(row.getCell(8).formula, "D2/G2");
+    assert.equal(row.getCell(8).result, 20);
 });
 
-test("it colors the closing balances green or red", function (assert) {
-    const store = this.store();
-    let event;
-
-    run(() => {
-        event = this.subject();
-        const alice = store.createRecord("user", { name: "Alice", event });
-        const bob = store.createRecord("user", { name: "Bob", event });
-
-        event.get("users").pushObjects([alice, bob]);
-
-        const transaction = store.createRecord("transaction", {
-            name: "Tickets",
-            amount: 20,
-            payer: alice,
-            participants: [alice, bob],
-        });
-
-        event.get("transactions").pushObject(transaction);
-    });
-
-    const sheet = buildWorkbook(event).getWorksheet("Transactions");
-
-    // row 1: header, row 2: transaction, row 3: blank, row 4: "Balances"
-    const aliceRow = sheet.getRow(5);
-    const bobRow = sheet.getRow(6);
-
-    assert.equal(aliceRow.getCell(1).value, "Alice");
-    assert.equal(aliceRow.getCell(2).value, 10);
-    assert.equal(aliceRow.getCell(2).font.color.argb, "FF28A745");
-
-    assert.equal(bobRow.getCell(1).value, "Bob");
-    assert.equal(bobRow.getCell(2).value, -10);
-    assert.equal(bobRow.getCell(2).font.color.argb, "FFDC3545");
-});
-
-test("it lists individual contributors and amounts for a deposit", function (assert) {
+test("it lists individual contributors and amounts for a deposit, with no factor columns", function (assert) {
     const store = this.store();
     let event;
 
@@ -101,10 +77,139 @@ test("it lists individual contributors and amounts for a deposit", function (ass
         event.get("transactions").pushObject(deposit);
     });
 
+    const row = buildWorkbook(event).getWorksheet("Transactions").getRow(2);
+
+    assert.equal(row.getCell(1).value, "(multiple)");
+    assert.equal(row.getCell(2).value, "Deposit");
+    assert.equal(row.getCell(4).value, 250);
+    assert.equal(row.getCell(5).value, 200);
+    assert.equal(row.getCell(6).value, 50);
+    assert.equal(row.getCell(7).value, null);
+    assert.equal(row.getCell(8).value, null);
+});
+
+test("it lists exact per-person amounts for an itemized expense, crediting the payer", function (assert) {
+    const store = this.store();
+    let event;
+
+    run(() => {
+        event = this.subject();
+        const alice = store.createRecord("user", { id: "alice", name: "Alice", event });
+        const bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+
+        event.get("users").pushObjects([alice, bob]);
+
+        const bill = store.createRecord("transaction", {
+            type: "itemized",
+            name: "Groceries",
+            payer: alice,
+            amount: 45,
+            contributions: {
+                [alice.get("id")]: 15,
+                [bob.get("id")]: 30,
+            },
+        });
+
+        event.get("transactions").pushObject(bill);
+    });
+
+    const row = buildWorkbook(event).getWorksheet("Transactions").getRow(2);
+
+    assert.equal(row.getCell(1).value, "Alice");
+    assert.equal(row.getCell(2).value, "Itemized");
+    assert.equal(row.getCell(4).value, 45);
+    assert.equal(row.getCell(5).value, 15);
+    assert.equal(row.getCell(6).value, 30);
+    assert.equal(row.getCell(7).value, null);
+});
+
+test("it puts every person's closing balance in one row below their column, colored and formula-driven", function (assert) {
+    const store = this.store();
+    let event;
+
+    run(() => {
+        event = this.subject();
+        const alice = store.createRecord("user", { id: "alice", name: "Alice", event });
+        const bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+
+        event.get("users").pushObjects([alice, bob]);
+
+        const transaction = store.createRecord("transaction", {
+            name: "Tickets",
+            amount: 20,
+            payer: alice,
+            participants: [alice, bob],
+        });
+
+        event.get("transactions").pushObject(transaction);
+    });
+
     const sheet = buildWorkbook(event).getWorksheet("Transactions");
 
-    assert.deepEqual(
-        sheet.getRow(2).values.slice(1),
-        ["(multiple)", "Deposit", "Flat prepayment", 250, 200, 50, "", ""]
-    );
+    // row 1: header, row 2: transaction, row 3: blank, row 4: balances
+    const balanceRow = sheet.getRow(4);
+
+    assert.equal(balanceRow.getCell(1).value, "Balances");
+
+    const aliceCell = balanceRow.getCell(5);
+    const bobCell = balanceRow.getCell(6);
+
+    assert.equal(aliceCell.result, 10);
+    assert.equal(aliceCell.font.color.argb, "FF28A745");
+    assert.ok(aliceCell.formula.includes("SUMPRODUCT"));
+
+    assert.equal(bobCell.result, -10);
+    assert.equal(bobCell.font.color.argb, "FFDC3545");
+});
+
+test("it computes the right balance across a mix of expense, donation, deposit and itemized rows", function (assert) {
+    const store = this.store();
+    let event;
+    let alice;
+    let bob;
+    let carol;
+
+    run(() => {
+        event = this.subject();
+        alice = store.createRecord("user", { id: "alice", name: "Alice", event });
+        bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+        carol = store.createRecord("user", { id: "carol", name: "Carol", event });
+
+        event.get("users").pushObjects([alice, bob, carol]);
+
+        event.get("transactions").pushObjects([
+            store.createRecord("transaction", {
+                name: "Dinner",
+                amount: 30,
+                payer: alice,
+                participants: [alice, bob, carol],
+            }),
+            store.createRecord("transaction", {
+                type: "donation",
+                name: "Gift",
+                amount: 12,
+                payer: bob,
+                participants: [alice, carol],
+            }),
+            store.createRecord("transaction", {
+                type: "deposit",
+                name: "Prepayment",
+                amount: 40,
+                contributions: { [carol.get("id")]: 40 },
+            }),
+            store.createRecord("transaction", {
+                type: "itemized",
+                name: "Groceries",
+                payer: carol,
+                amount: 18,
+                contributions: { [alice.get("id")]: 8, [bob.get("id")]: 10 },
+            }),
+        ]);
+    });
+
+    const balanceRow = buildWorkbook(event).getWorksheet("Transactions").getRow(7);
+
+    assert.equal(balanceRow.getCell(5).result, parseFloat(alice.get("balance")));
+    assert.equal(balanceRow.getCell(6).result, parseFloat(bob.get("balance")));
+    assert.equal(balanceRow.getCell(7).result, parseFloat(carol.get("balance")));
 });

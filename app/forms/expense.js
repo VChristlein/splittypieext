@@ -1,4 +1,4 @@
-import { equal, oneWay } from "@ember/object/computed";
+import { equal, or, oneWay } from "@ember/object/computed";
 import EmberObject, {
   computed,
   getWithDefault,
@@ -15,6 +15,7 @@ export const TRANSACTION_TYPES = [
     { value: "expense", label: "Expense" },
     { value: "donation", label: "Donation (e.g. birthday gift)" },
     { value: "deposit", label: "Deposit (e.g. prepayment)" },
+    { value: "itemized", label: "Itemized expense (exact amount per person)" },
 ];
 
 const Validations = buildValidations({
@@ -28,11 +29,11 @@ const Validations = buildValidations({
         validators: [
             validator("presence", {
                 presence: true,
-                // a deposit's amount is derived from its contributions,
-                // not typed in directly
-                disabled: oneWay("model.isDeposit"),
+                // a deposit/itemized expense's amount is derived from its
+                // per-person entries, not typed in directly
+                disabled: oneWay("model.usesContributionEntries"),
             }),
-            validator("number", { allowString: true, disabled: oneWay("model.isDeposit") }),
+            validator("number", { allowString: true, disabled: oneWay("model.usesContributionEntries") }),
         ],
     },
     payer: validator("presence", {
@@ -41,7 +42,7 @@ const Validations = buildValidations({
     }),
     participants: validator("presence", {
         presence: true,
-        disabled: oneWay("model.isDeposit"),
+        disabled: oneWay("model.usesContributionEntries"),
     }),
 });
 
@@ -52,6 +53,8 @@ export default FormObject.extend(Validations, {
     isSaving: oneWay("event.isSaving"),
 
     isDeposit: equal("type", "deposit"),
+    isItemized: equal("type", "itemized"),
+    usesContributionEntries: or("isDeposit", "isItemized"),
 
     selectedTransactionType: computed("type", {
         get() {
@@ -72,6 +75,12 @@ export default FormObject.extend(Validations, {
         return get(this, "type") === "donation"
             ? "Credit this donation to (split according to their weight):"
             : "Divide the cost among:";
+    }),
+
+    contributionsLabel: computed("type", function () {
+        return get(this, "isItemized")
+            ? "How much does each person owe?"
+            : "How much has each person already put in?";
     }),
 
     init() {
@@ -155,7 +164,7 @@ export default FormObject.extend(Validations, {
 
         setProperties(model, getProperties(this, "name", "date", "type"));
 
-        if (get(this, "isDeposit")) {
+        if (get(this, "usesContributionEntries")) {
             const contributions = {};
 
             get(this, "contributionEntries").forEach((entry) => {
@@ -166,11 +175,15 @@ export default FormObject.extend(Validations, {
                 }
             });
 
-            set(model, "amount", get(this, "totalContributions"));
-            set(model, "payer", null);
-            set(model, "participants", []);
-            set(model, "participantFactors", {});
-            set(model, "contributions", contributions);
+            // a deposit has no single payer; an itemized expense does, same
+            // as a regular expense
+            setProperties(model, {
+                amount: get(this, "totalContributions"),
+                payer: get(this, "isDeposit") ? null : get(this, "payer"),
+                participants: [],
+                participantFactors: {},
+                contributions,
+            });
 
             return;
         }

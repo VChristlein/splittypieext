@@ -311,3 +311,46 @@ test("a deposit doesn't credit someone who didn't contribute", function (assert)
     assert.equal(bob.get("balance"), (50).toFixed(2));
     assert.equal(alice.get("balance"), (0).toFixed(2));
 });
+
+test("an itemized expense debits each person the exact amount assigned to them", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+    let carol;
+
+    run(() => {
+        const event = store.createRecord("event", {
+            name: "Test event",
+        });
+        alice = this.subject({ id: "alice" });
+        bob = store.createRecord("user", {
+            id: "bob",
+            name: "Bob",
+            event,
+        });
+        carol = store.createRecord("user", {
+            id: "carol",
+            name: "Carol",
+            event,
+        });
+        // Alice paid for groceries, but split by what each person actually
+        // picked out rather than an even or weighted share
+        const groceries = store.createRecord("transaction", {
+            type: "itemized",
+            name: "Groceries",
+            amount: 45,
+            payer: alice,
+            contributions: {
+                [bob.get("id")]: 30,
+                [carol.get("id")]: 15,
+            },
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObject(groceries);
+    });
+
+    assert.equal(alice.get("balance"), (45).toFixed(2));
+    assert.equal(bob.get("balance"), (-30).toFixed(2));
+    assert.equal(carol.get("balance"), (-15).toFixed(2));
+});
