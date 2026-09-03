@@ -354,3 +354,107 @@ test("an itemized expense debits each person the exact amount assigned to them",
     assert.equal(bob.get("balance"), (-30).toFixed(2));
     assert.equal(carol.get("balance"), (-15).toFixed(2));
 });
+
+test("a deposit directed at someone debits them the full amount collected", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+    let dave;
+
+    run(() => {
+        const event = store.createRecord("event", {
+            name: "Test event",
+        });
+        alice = this.subject({ id: "alice" });
+        bob = store.createRecord("user", {
+            id: "bob",
+            name: "Bob",
+            event,
+        });
+        dave = store.createRecord("user", {
+            id: "dave",
+            name: "Dave",
+            event,
+        });
+        // Alice and Bob send Dave their share of the flat's deposit so he
+        // can pay the landlord with one card
+        const deposit = store.createRecord("transaction", {
+            type: "deposit",
+            name: "Flat deposit",
+            amount: 250,
+            payer: dave,
+            contributions: {
+                [alice.get("id")]: 100,
+                [bob.get("id")]: 150,
+            },
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObject(deposit);
+    });
+
+    assert.equal(alice.get("balance"), (100).toFixed(2));
+    assert.equal(bob.get("balance"), (150).toFixed(2));
+    assert.equal(dave.get("balance"), (-250).toFixed(2));
+});
+
+test("a directed deposit followed by the full expense correctly nets out who owes what", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+    let carol;
+    let dave;
+    let eve;
+
+    run(() => {
+        const event = store.createRecord("event", {
+            name: "Test event",
+        });
+        alice = this.subject({ id: "alice" });
+        bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+        carol = store.createRecord("user", { id: "carol", name: "Carol", event });
+        dave = store.createRecord("user", { id: "dave", name: "Dave", event });
+        eve = store.createRecord("user", { id: "eve", name: "Eve", event });
+
+        // Alice and Bob prepay their share of the deposit to Dave, who's
+        // booking the flat; Carol and Eve haven't paid anything yet
+        const deposit = store.createRecord("transaction", {
+            type: "deposit",
+            name: "Flat deposit",
+            amount: 250,
+            payer: dave,
+            contributions: {
+                [alice.get("id")]: 100,
+                [bob.get("id")]: 150,
+            },
+        });
+
+        // later, Dave pays the landlord the full $1000 (the $250 he
+        // collected plus $750 of his own money), split evenly among all 5
+        const flat = store.createRecord("transaction", {
+            name: "Flat total cost",
+            amount: 1000,
+            payer: dave,
+            participants: [alice, bob, carol, dave, eve],
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObjects([deposit, flat]);
+    });
+
+    // fair share = 1000 / 5 = 200 each
+    assert.equal(alice.get("balance"), (100 - 200).toFixed(2));
+    assert.equal(bob.get("balance"), (150 - 200).toFixed(2));
+    assert.equal(carol.get("balance"), (-200).toFixed(2));
+    assert.equal(eve.get("balance"), (-200).toFixed(2));
+    // Dave collected 250 from others and put in 750 of his own,
+    // fair share 200, so he's owed 1000 - 250 - 200 = 550 back
+    assert.equal(dave.get("balance"), (-250 + 1000 - 200).toFixed(2));
+
+    // the group's ledger should be fully conservative once every dollar
+    // spent is accounted for by a transaction (no money silently created)
+    const total = [alice, bob, carol, dave, eve]
+        .reduce((sum, user) => sum + parseFloat(user.get("balance")), 0);
+
+    assert.equal(total.toFixed(2), (0).toFixed(2));
+});

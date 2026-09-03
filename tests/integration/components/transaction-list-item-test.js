@@ -84,6 +84,34 @@ test("it renders a deposit", function (assert) {
     );
 });
 
+test("it renders a deposit directed at one person", function (assert) {
+    assert.expect(1);
+
+    const alice = { id: 1, name: "Alice" };
+    const bob = { id: 2, name: "Bob" };
+    const dave = { id: 3, name: "Dave" };
+
+    const transaction = EmberObject.create({
+        payer: dave,
+        name: "Flat deposit",
+        amount: "250",
+        isDeposit: true,
+        contributions: { 1: 100, 2: 150 },
+        event: {
+            users: [alice, bob, dave],
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-list-item transaction=transaction}}`);
+
+    assert.equal(
+        extraTrim(this.$().text()),
+        "Deposit for Flat deposit — collected by Dave Alice (100), Bob (150) 250.00 USD"
+    );
+});
+
 test("it renders an itemized expense", function (assert) {
     assert.expect(1);
 

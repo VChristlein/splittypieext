@@ -22,22 +22,20 @@
         }}
       </div>
 
-      {{#unless transaction.isDeposit}}
-        <div class="form-group {{if transaction.formErrors.payer.message "has-error"}}">
-          <label class="control-label">{{transaction.payerLabel}}</label>
-          {{my-select
-            class="transaction-payer"
-            options=users
-            selected=transaction.payer
-            prompt="Select payer..."
-            optionValuePath="id"
-            optionLabelPath="name"
-          }}
-          <div class="help-block with-errors">
-            {{transaction.formErrors.payer.message}}
-          </div>
+      <div class="form-group {{if transaction.formErrors.payer.message "has-error"}}">
+        <label class="control-label">{{transaction.payerLabel}}</label>
+        {{my-select
+          class="transaction-payer"
+          options=users
+          selected=transaction.payer
+          prompt="Select payer..."
+          optionValuePath="id"
+          optionLabelPath="name"
+        }}
+        <div class="help-block with-errors">
+          {{transaction.formErrors.payer.message}}
         </div>
-      {{/unless}}
+      </div>
 
       <div class="form-group {{if transaction.formErrors.name.message "has-error"}}">
         <label class="control-label">For what?</label>

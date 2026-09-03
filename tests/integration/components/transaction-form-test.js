@@ -117,12 +117,44 @@ test("it shows an amount per person instead of a split for deposits", function (
     this.set("transaction", transaction);
     this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
 
-    assert.equal(this.$(".transaction-payer").length, 0);
+    // the payer field is still shown for a deposit, just optional - it's
+    // who the money is directed to, if anyone in particular
+    assert.equal(this.$(".transaction-payer").length, 1);
     assert.equal(this.$(".transaction-amount").length, 0);
     assert.equal(this.$(".transaction-participants").length, 0);
     assert.equal(this.$(".transaction-contributions li").length, 2);
     assert.equal(this.$(".transaction-contributions .contribution-amount").eq(0).val(), "150");
     assert.equal(this.$(".transaction-contributions-total").text().trim(), "Total: 250.00 USD");
+});
+
+test("it lets a deposit optionally be directed to one person", function (assert) {
+    assert.expect(2);
+
+    const dave = { id: 1, name: "Dave" };
+
+    const transaction = EmberObject.create({
+        name: "Flat prepayment",
+        type: "deposit",
+        isDeposit: true,
+        usesContributionEntries: true,
+        payer: dave,
+        payerLabel: "Who is this going to? (optional)",
+        totalContributions: 250,
+        contributionEntries: [],
+        event: {
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.set("users", [dave]);
+    this.render(hbs`{{transaction-form transaction=transaction users=users}}`);
+
+    assert.equal(
+        this.$(".transaction-payer").closest(".form-group").find(".control-label").text().trim(),
+        "Who is this going to? (optional)"
+    );
+    assert.equal(this.$(".transaction-payer").find(":selected").text().trim(), "Dave");
 });
 
 test("it keeps the payer but swaps the split for exact amounts on an itemized expense", function (assert) {

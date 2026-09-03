@@ -143,6 +143,51 @@ test("it lists individual contributors and amounts for a deposit, with no factor
     assert.equal(row.getCell(8).value, null);
 });
 
+test("it shows who a deposit is directed to, and debits them the total in the balance formula", function (assert) {
+    const store = this.store();
+    let event;
+    let alice;
+    let bob;
+    let dave;
+
+    run(() => {
+        event = this.subject();
+        alice = store.createRecord("user", { id: "alice", name: "Alice", event });
+        bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+        dave = store.createRecord("user", { id: "dave", name: "Dave", event });
+
+        event.get("users").pushObjects([alice, bob, dave]);
+
+        const deposit = store.createRecord("transaction", {
+            type: "deposit",
+            name: "Flat deposit",
+            amount: 250,
+            payer: dave,
+            contributions: {
+                [alice.get("id")]: 100,
+                [bob.get("id")]: 150,
+            },
+        });
+
+        event.get("transactions").pushObject(deposit);
+    });
+
+    const sheet = buildWorkbook(event).getWorksheet("Transactions");
+    const row = sheet.getRow(2);
+
+    // "Paid by" shows the recipient's name rather than "(multiple)" once
+    // the deposit is directed at someone
+    assert.equal(row.getCell(1).value, "Dave");
+    assert.equal(row.getCell(2).value, "Deposit");
+
+    // row 1: header, row 2: transaction, row 3: blank, row 4: balances
+    const balanceRow = sheet.getRow(4);
+
+    assert.equal(balanceRow.getCell(5).result, parseFloat(alice.get("balance")));
+    assert.equal(balanceRow.getCell(6).result, parseFloat(bob.get("balance")));
+    assert.equal(balanceRow.getCell(7).result, parseFloat(dave.get("balance")));
+});
+
 test("it lists exact per-person amounts for an itemized expense, crediting the payer", function (assert) {
     const store = this.store();
     let event;

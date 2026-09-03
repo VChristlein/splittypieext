@@ -70,7 +70,11 @@ function buildTransactionRow(transaction, users) {
         });
 
         return {
-            paidBy: type === "deposit" ? "(multiple)" : (transaction.get("payer.name") || ""),
+            // a deposit's payer, if set, is who the money is directed to -
+            // otherwise it's a general pot with no one person collecting it
+            paidBy: type === "deposit"
+                ? (transaction.get("payer.name") || "(multiple)")
+                : (transaction.get("payer.name") || ""),
             type: type === "deposit" ? "Deposit" : "Itemized",
             name: transaction.get("name") || "",
             amount,
@@ -147,9 +151,11 @@ function appendTransactionRow(sheet, transaction, users, rowNumber) {
 // one SUMPRODUCT-based formula per person, mirroring models/user.js#balance
 // exactly: an expense debits participants by factor share and credits the
 // payer the full amount; a donation is the same but flipped; a deposit
-// credits contributors directly; an itemized expense debits the assigned
-// amounts directly while still crediting the payer the full amount; a
-// transfer credits the sender and debits the recipient by the flat amount
+// credits contributors directly, and additionally debits its payer (if
+// set) the full amount collected, same as a directed deposit; an itemized
+// expense debits the assigned amounts directly while still crediting the
+// payer the full amount; a transfer credits the sender and debits the
+// recipient by the flat amount
 function balanceFormula(personColLetter, name, firstRow, lastRow) {
     const paidByRange = `$${columnLetter(PAID_BY_COL)}$${firstRow}:$${columnLetter(PAID_BY_COL)}$${lastRow}`;
     const typeRange = `$${columnLetter(TYPE_COL)}$${firstRow}:$${columnLetter(TYPE_COL)}$${lastRow}`;
@@ -170,6 +176,7 @@ function balanceFormula(personColLetter, name, firstRow, lastRow) {
         `-${paidAs('"Donation"')}`,
         `+${owedAs('"Donation"', "INDIVIDUAL_AMOUNT_RANGE")}`,
         `+${owedAs('"Deposit"')}`,
+        `-${paidAs('"Deposit"')}`,
         `+${paidAs('"Itemized"')}`,
         `-${owedAs('"Itemized"')}`,
         `+${paidAs('"Transfer"')}`,

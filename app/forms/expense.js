@@ -66,7 +66,10 @@ export default FormObject.extend(Validations, {
     }),
 
     payerLabel: computed("type", function () {
-        return get(this, "type") === "donation" ? "Who's donating?" : "Who paid?";
+        return {
+            donation: "Who's donating?",
+            deposit: "Who is this going to? (optional)",
+        }[get(this, "type")] || "Who paid?";
     }),
 
     participantsLabel: computed("type", function () {
@@ -225,12 +228,14 @@ export default FormObject.extend(Validations, {
                 }
             });
 
-            // a deposit has no single payer; an itemized expense does, same
-            // as a regular expense
+            // a deposit's payer is optional - who this money is going to,
+            // if it's headed to one person in particular rather than a
+            // general pot; an itemized expense's payer is required, same as
+            // a regular expense
             setProperties(model, {
                 amount: get(this, "amount"),
                 amounts: [],
-                payer: get(this, "isDeposit") ? null : get(this, "payer"),
+                payer: get(this, "payer"),
                 participants: [],
                 participantFactors: {},
                 contributions,

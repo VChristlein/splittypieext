@@ -35,6 +35,13 @@ export default Model.extend(ModelMixin, {
             );
 
             const paidTransactions = transactions.rejectBy("isDeposit").filterBy("payer", this);
+            // a deposit's payer, when set, is who the money is actually
+            // going to (e.g. one person collecting everyone's prepayment) -
+            // they're debited the total collected, same as a transfer
+            // recipient, rather than crediting a fictional "payer"
+            const directedDepositTransactions = depositTransactions.filter(
+                t => get(t, "payer") === this
+            );
             const owedTransactions = factorBasedTransactions.filter(
                 t => get(t, "participants").includes(this)
             );
@@ -83,6 +90,20 @@ export default Model.extend(ModelMixin, {
                 return acc + (myContribution > 0 ? myContribution : 0);
             }, 0);
 
+            // if the deposit is directed at someone, they're debited the
+            // full amount collected - they're now holding it on behalf of
+            // the group until it's actually spent (recorded separately)
+            const directedDepositDebit = directedDepositTransactions.reduce((acc, t) => {
+                const contributions = get(t, "contributions") || {};
+                const total = Object.values(contributions).reduce((sum, value) => {
+                    const parsed = parseFloat(value);
+
+                    return sum + (parsed > 0 ? parsed : 0);
+                }, 0);
+
+                return acc + total;
+            }, 0);
+
             // an itemized expense debits each person exactly the amount
             // assigned to them, with no factor involved
             const itemizedOwed = itemizedTransactions.reduce((acc, t) => {
@@ -92,7 +113,9 @@ export default Model.extend(ModelMixin, {
                 return acc + (myShare > 0 ? myShare : 0);
             }, 0);
 
-            return (paidMoney - owedMoney - itemizedOwed + depositCredit).toFixed(2);
+            return (
+                paidMoney - owedMoney - itemizedOwed + depositCredit - directedDepositDebit
+            ).toFixed(2);
         }
     ),
 });
