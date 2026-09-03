@@ -51,6 +51,61 @@ test("it lists each transaction with per-person factors, and formulas for the to
     assert.equal(row.getCell(8).result, 20);
 });
 
+test("it shows the amount as an addition when it was entered as several individual purchases", function (assert) {
+    const store = this.store();
+    let event;
+
+    run(() => {
+        event = this.subject();
+        const alice = store.createRecord("user", { id: "alice", name: "Alice", event });
+        const bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+
+        event.get("users").pushObjects([alice, bob]);
+
+        const shopping = store.createRecord("transaction", {
+            name: "Groceries (several trips)",
+            amount: 120,
+            amounts: [80, 40],
+            payer: alice,
+            participants: [alice, bob],
+        });
+
+        event.get("transactions").pushObject(shopping);
+    });
+
+    const amountCell = buildWorkbook(event).getWorksheet("Transactions").getRow(2).getCell(4);
+
+    assert.equal(amountCell.formula, "80+40");
+    assert.equal(amountCell.result, 120);
+});
+
+test("it shows a plain number for a transaction with just one amount", function (assert) {
+    const store = this.store();
+    let event;
+
+    run(() => {
+        event = this.subject();
+        const alice = store.createRecord("user", { id: "alice", name: "Alice", event });
+
+        event.get("users").pushObjects([alice]);
+
+        const dinner = store.createRecord("transaction", {
+            name: "Dinner",
+            amount: 30,
+            amounts: [30],
+            payer: alice,
+            participants: [alice],
+        });
+
+        event.get("transactions").pushObject(dinner);
+    });
+
+    const amountCell = buildWorkbook(event).getWorksheet("Transactions").getRow(2).getCell(4);
+
+    assert.equal(amountCell.value, 30);
+    assert.notOk(amountCell.formula);
+});
+
 test("it lists individual contributors and amounts for a deposit, with no factor columns", function (assert) {
     const store = this.store();
     let event;

@@ -90,6 +90,10 @@ function buildTransactionRow(transaction, users) {
         type: type === "donation" ? "Donation" : "Expense",
         name: transaction.get("name") || "",
         amount,
+        // when this amount was entered as several individual purchases,
+        // e.g. a family's separate shopping trips, keep them so the Amount
+        // cell can show the addition rather than just the final total
+        amounts: (transaction.get("amounts") || []).map(value => parseFloat(value)).filter(value => value > 0),
         perUser,
         hasFactors: true,
     };
@@ -103,7 +107,18 @@ function appendTransactionRow(sheet, transaction, users, rowNumber) {
     sheet.getCell(rowNumber, PAID_BY_COL).value = row.paidBy;
     sheet.getCell(rowNumber, TYPE_COL).value = row.type;
     sheet.getCell(rowNumber, NAME_COL).value = row.name;
-    sheet.getCell(rowNumber, AMOUNT_COL).value = row.amount;
+
+    if (row.amounts && row.amounts.length > 1) {
+        // e.g. two shopping trips of 80 and 40 show as "=80+40" rather
+        // than the already-added-up 120, so the individual amounts stay
+        // visible and the total still recalculates if one of them is edited
+        sheet.getCell(rowNumber, AMOUNT_COL).value = {
+            formula: row.amounts.join("+"),
+            result: row.amount,
+        };
+    } else {
+        sheet.getCell(rowNumber, AMOUNT_COL).value = row.amount;
+    }
 
     users.forEach((user, index) => {
         const value = row.perUser[user.get("id")];
