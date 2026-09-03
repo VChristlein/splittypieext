@@ -69,6 +69,7 @@ module.exports = function (defaults) {
     app.import("node_modules/bootstrap-sass/assets/javascripts/bootstrap.js");
     app.import("node_modules/mprogress/build/css/mprogress.css");
     app.import("node_modules/mprogress/build/js/mprogress.js");
+    app.import("node_modules/exceljs/dist/exceljs.min.js");
 
     return app.toTree();
 };

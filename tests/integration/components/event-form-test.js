@@ -46,3 +46,18 @@ test("it renders with model properties", function (assert) {
     assert.equal(this.$(".user-name").eq(1).val(), "Alice");
     assert.equal(this.$(".user-name").eq(2).val(), "John");
 });
+
+test("it offers an export-to-excel option for an existing event", function (assert) {
+    assert.expect(1);
+
+    const event = EmberObject.create({
+        name: "Test event",
+        isNew: false,
+        users: [],
+    });
+
+    this.set("event", event);
+    this.render(hbs`{{event-form event=event}}`);
+
+    assert.equal(this.$(".export-excel").text().trim(), "Export to Excel");
+});

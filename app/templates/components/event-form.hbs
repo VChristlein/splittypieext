@@ -48,6 +48,8 @@
           <label class="control-label">Other options:</label>
           <div class="input-group">
             <button {{action "delete"}} class="btn btn-danger delete-event">Delete Event</button>
+            &nbsp;
+            <button type="button" {{action "exportToExcel"}} class="btn btn-default export-excel">Export to Excel</button>
             {{#if event.isOffline}}
               &nbsp;
               <button {{action "syncOnline"}} class="btn btn-success sync-online">Sync Online</button>

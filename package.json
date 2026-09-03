@@ -91,5 +91,8 @@
     "paths": [
       "lib/upload-rollbar-source-maps"
     ]
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
   }
 }
