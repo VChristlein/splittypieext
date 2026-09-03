@@ -16,6 +16,9 @@ export default Model.extend(ModelMixin, {
     obeyFactors: attr("boolean", { defaultValue: true }),
     // per-transaction override of each participant's factor, keyed by user id
     participantFactors: attr({ defaultValue: () => ({}) }),
+    // for a deposit: how much each user already contributed, keyed by user
+    // id - each person's own entered amount, not a total split any way
+    contributions: attr({ defaultValue: () => ({}) }),
     typeOrDefault: computed("type", {
         // FIXME: I don't like this typeOrDefault
         get() {

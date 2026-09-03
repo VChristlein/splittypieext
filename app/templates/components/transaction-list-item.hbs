@@ -4,6 +4,9 @@
 <div class="transaction-list-item-description">
   {{#if transaction.isTransfer}}
     <strong>{{transaction.payer.name}}</strong> settled up with <strong>{{transaction.participants.firstObject.name}}</strong>
+  {{else if transaction.isDeposit}}
+    Deposit for <em>{{transaction.name}}</em><br>
+    {{inline-svg "user" class="icon"}} <small>{{contributors}}</small>
   {{else}}
     <strong>{{transaction.payer.name}}</strong> {{verb}} <em>{{transaction.name}}</em><br>
     {{inline-svg "user" class="icon"}} <small>{{participants}}</small>

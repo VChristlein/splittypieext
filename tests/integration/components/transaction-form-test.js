@@ -91,6 +91,37 @@ test("it still shows a participants section for donations, with a contextual lab
     assert.equal(this.$(".transaction-participants").find(":checked").length, 2);
 });
 
+test("it shows an amount per person instead of a split for deposits", function (assert) {
+    assert.expect(6);
+
+    const bob = { id: 1, name: "Bob" };
+    const alice = { id: 2, name: "Alice" };
+
+    const transaction = EmberObject.create({
+        name: "Flat prepayment",
+        type: "deposit",
+        isDeposit: true,
+        totalContributions: 250,
+        contributionEntries: [
+            EmberObject.create({ user: bob, amount: 150 }),
+            EmberObject.create({ user: alice, amount: 100 }),
+        ],
+        event: {
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
+
+    assert.equal(this.$(".transaction-payer").length, 0);
+    assert.equal(this.$(".transaction-amount").length, 0);
+    assert.equal(this.$(".transaction-participants").length, 0);
+    assert.equal(this.$(".transaction-contributions li").length, 2);
+    assert.equal(this.$(".transaction-contributions .contribution-amount").eq(0).val(), "150");
+    assert.equal(this.$(".transaction-contributions-total").text().trim(), "Total: 250.00 USD");
+});
+
 test("it shows an editable factor per participant when obeying factors", function (assert) {
     assert.expect(3);
 

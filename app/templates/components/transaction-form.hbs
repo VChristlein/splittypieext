@@ -22,20 +22,22 @@
         }}
       </div>
 
-      <div class="form-group {{if transaction.formErrors.payer.message "has-error"}}">
-        <label class="control-label">{{transaction.payerLabel}}</label>
-        {{my-select
-          class="transaction-payer"
-          options=users
-          selected=transaction.payer
-          prompt="Select payer..."
-          optionValuePath="id"
-          optionLabelPath="name"
-        }}
-        <div class="help-block with-errors">
-          {{transaction.formErrors.payer.message}}
+      {{#unless transaction.isDeposit}}
+        <div class="form-group {{if transaction.formErrors.payer.message "has-error"}}">
+          <label class="control-label">{{transaction.payerLabel}}</label>
+          {{my-select
+            class="transaction-payer"
+            options=users
+            selected=transaction.payer
+            prompt="Select payer..."
+            optionValuePath="id"
+            optionLabelPath="name"
+          }}
+          <div class="help-block with-errors">
+            {{transaction.formErrors.payer.message}}
+          </div>
         </div>
-      </div>
+      {{/unless}}
 
       <div class="form-group {{if transaction.formErrors.name.message "has-error"}}">
         <label class="control-label">For what?</label>
@@ -45,16 +47,18 @@
         </div>
       </div>
 
-      <div class="form-group {{if transaction.formErrors.amount.message "has-error"}}">
-        <label class="control-label">How much?</label>
-        <div class="input-group">
-          <span class="input-group-addon">{{transaction.event.currency.code}}</span>
-          {{input value=transaction.amount type="number" class="form-control transaction-amount" placeholder="Amount"}}
+      {{#unless transaction.isDeposit}}
+        <div class="form-group {{if transaction.formErrors.amount.message "has-error"}}">
+          <label class="control-label">How much?</label>
+          <div class="input-group">
+            <span class="input-group-addon">{{transaction.event.currency.code}}</span>
+            {{input value=transaction.amount type="number" class="form-control transaction-amount" placeholder="Amount"}}
+          </div>
+          <div class="help-block with-errors">
+            {{transaction.formErrors.amount.message}}
+          </div>
         </div>
-        <div class="help-block with-errors">
-          {{transaction.formErrors.amount.message}}
-        </div>
-      </div>
+      {{/unless}}
 
       <div class="form-group {{if transaction.formErrors.date.message "has-error"}}">
         <label class="control-label">When? (this is optional)</label>
@@ -64,39 +68,59 @@
         </div>
       </div>
 
-      <div class="form-group {{if transaction.formErrors.participants.message "has-error"}}">
-        <label class="control-label">{{transaction.participantsLabel}}</label>
-        {{my-checkbox-list
-          class="transaction-participants"
-          content=users
-          selection=transaction.participants
-          optionValuePath="id"
-          optionLabelPath="name"
-        }}
-        <div class="help-block with-errors">
-          {{transaction.formErrors.participants.message}}
-        </div>
-
-        <div class="checkbox">
-          <label>
-            {{input type="checkbox" class="transaction-obey-factors" checked=transaction.obeyFactors}}
-            Obey factors
-          </label>
-        </div>
-
-        {{#if transaction.obeyFactors}}
-          <ul class="list-unstyled transaction-participant-factors">
-            {{#each transaction.participantFactorEntries as |entry|}}
+      {{#if transaction.isDeposit}}
+        <div class="form-group">
+          <label class="control-label">How much has each person already put in?</label>
+          <ul class="list-unstyled transaction-contributions">
+            {{#each transaction.contributionEntries as |entry|}}
               <li>
-                <label>
-                  {{entry.participant.name}}
-                  {{input type="number" step="0.1" min="0" class="participant-factor" value=entry.factor}}
-                </label>
+                <div class="input-group">
+                  <span class="input-group-addon">{{entry.user.name}}</span>
+                  <span class="input-group-addon">{{transaction.event.currency.code}}</span>
+                  {{input type="number" step="0.01" min="0" class="contribution-amount" value=entry.amount}}
+                </div>
               </li>
             {{/each}}
           </ul>
-        {{/if}}
-      </div>
+          <p class="help-block transaction-contributions-total">
+            Total: {{format-money transaction.totalContributions symbol=transaction.event.currency.code format="%v %s"}}
+          </p>
+        </div>
+      {{else}}
+        <div class="form-group {{if transaction.formErrors.participants.message "has-error"}}">
+          <label class="control-label">{{transaction.participantsLabel}}</label>
+          {{my-checkbox-list
+            class="transaction-participants"
+            content=users
+            selection=transaction.participants
+            optionValuePath="id"
+            optionLabelPath="name"
+          }}
+          <div class="help-block with-errors">
+            {{transaction.formErrors.participants.message}}
+          </div>
+
+          <div class="checkbox">
+            <label>
+              {{input type="checkbox" class="transaction-obey-factors" checked=transaction.obeyFactors}}
+              Obey factors
+            </label>
+          </div>
+
+          {{#if transaction.obeyFactors}}
+            <ul class="list-unstyled transaction-participant-factors">
+              {{#each transaction.participantFactorEntries as |entry|}}
+                <li>
+                  <label>
+                    {{entry.participant.name}}
+                    {{input type="number" step="0.1" min="0" class="participant-factor" value=entry.factor}}
+                  </label>
+                </li>
+              {{/each}}
+            </ul>
+          {{/if}}
+        </div>
+      {{/if}}
 
       {{#unless transaction.isNew}}
         <div class="form-group">

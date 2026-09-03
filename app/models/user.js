@@ -18,12 +18,18 @@ export default Model.extend(ModelMixin, {
     }),
 
     balance: computed(
-        "event.transactions.{[],@each.amount,@each.payer,@each.participants,@each.obeyFactors,@each.participantFactors,@each.type}",
+        "event.transactions.{[],@each.amount,@each.payer,@each.participants,@each.obeyFactors,@each.participantFactors,@each.type,@each.contributions}",
         "event.users.@each.factor",
         function () {
             const transactions = get(this, "event.transactions");
-            const paidTransactions = transactions.filterBy("payer", this);
-            const owedTransactions = transactions.filter(
+            // a deposit isn't a single payer split among participants - it's
+            // each person's own already-contributed amount, so it's handled
+            // separately below instead of through the payer/participants math
+            const splittableTransactions = transactions.rejectBy("isDeposit");
+            const depositTransactions = transactions.filterBy("isDeposit");
+
+            const paidTransactions = splittableTransactions.filterBy("payer", this);
+            const owedTransactions = splittableTransactions.filter(
                 t => get(t, "participants").includes(this)
             );
             // a donation flows the other way: the contributor's balance goes
@@ -62,7 +68,16 @@ export default Model.extend(ModelMixin, {
                 return acc + (amount * factorFor(this) / totalFactor);
             }, 0);
 
-            return (paidMoney - owedMoney).toFixed(2);
+            // a deposit credits each contributor with exactly what they put
+            // in, independent of everyone else's contribution
+            const depositCredit = depositTransactions.reduce((acc, t) => {
+                const contributions = get(t, "contributions") || {};
+                const myContribution = parseFloat(contributions[get(this, "id")]);
+
+                return acc + (myContribution > 0 ? myContribution : 0);
+            }, 0);
+
+            return (paidMoney - owedMoney + depositCredit).toFixed(2);
         }
     ),
 });

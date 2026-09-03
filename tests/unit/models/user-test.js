@@ -125,8 +125,9 @@ test("it lets a transaction override a participant's factor just for itself", fu
         const event = store.createRecord("event", {
             name: "Test event",
         });
-        bob = this.subject();
+        bob = this.subject({ id: "bob" });
         family = store.createRecord("user", {
+            id: "family",
             name: "Family",
             factor: 3,
             event,
@@ -238,7 +239,7 @@ test("a donation credits according to weight, same as an expense would debit", f
     assert.equal(child.get("balance"), (15).toFixed(2));
 });
 
-test("a deposit is split among participants just like a regular expense", function (assert) {
+test("a deposit credits each person exactly what they individually put in", function (assert) {
     const store = this.store();
     let alice;
     let bob;
@@ -248,30 +249,65 @@ test("a deposit is split among participants just like a regular expense", functi
         const event = store.createRecord("event", {
             name: "Test event",
         });
-        alice = this.subject();
+        alice = this.subject({ id: "alice" });
         bob = store.createRecord("user", {
+            id: "bob",
             name: "Bob",
             event,
         });
         carol = store.createRecord("user", {
+            id: "carol",
             name: "Carol",
             event,
         });
-        // Bob fronts the flat's deposit for the whole group in one go,
-        // instead of everyone depositing their share individually
+        // everyone already deposited their own (uneven) share towards the
+        // flat's prepayment - nothing here gets split any way
         const deposit = store.createRecord("transaction", {
             type: "deposit",
             name: "Flat prepayment",
-            amount: 300,
-            payer: bob,
-            participants: [alice, bob, carol],
+            contributions: {
+                [alice.get("id")]: 200,
+                [bob.get("id")]: 50,
+                [carol.get("id")]: 100,
+            },
         });
 
         alice.set("event", event);
         event.get("transactions").pushObject(deposit);
     });
 
-    assert.equal(bob.get("balance"), (300 - (300 / 3)).toFixed(2));
-    assert.equal(alice.get("balance"), (-(300 / 3)).toFixed(2));
-    assert.equal(carol.get("balance"), (-(300 / 3)).toFixed(2));
+    assert.equal(alice.get("balance"), (200).toFixed(2));
+    assert.equal(bob.get("balance"), (50).toFixed(2));
+    assert.equal(carol.get("balance"), (100).toFixed(2));
+});
+
+test("a deposit doesn't credit someone who didn't contribute", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+
+    run(() => {
+        const event = store.createRecord("event", {
+            name: "Test event",
+        });
+        alice = this.subject({ id: "alice" });
+        bob = store.createRecord("user", {
+            id: "bob",
+            name: "Bob",
+            event,
+        });
+        const deposit = store.createRecord("transaction", {
+            type: "deposit",
+            name: "Flat prepayment",
+            contributions: {
+                [bob.get("id")]: 50,
+            },
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObject(deposit);
+    });
+
+    assert.equal(bob.get("balance"), (50).toFixed(2));
+    assert.equal(alice.get("balance"), (0).toFixed(2));
 });

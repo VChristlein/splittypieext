@@ -8,16 +8,19 @@ export default Component.extend({
         return get(this, "transaction.participants").getEach("name").join(", ");
     }),
 
-    verb: computed("transaction.{isDonation,isDeposit}", function () {
-        if (get(this, "transaction.isDonation")) {
-            return "donated for";
-        }
+    verb: computed("transaction.isDonation", function () {
+        return get(this, "transaction.isDonation") ? "donated for" : "paid for";
+    }),
 
-        if (get(this, "transaction.isDeposit")) {
-            return "deposited for";
-        }
+    // a deposit has no single payer, so list out who put in what
+    contributors: computed("transaction.{contributions,event.users.[]}", function () {
+        const contributions = get(this, "transaction.contributions") || {};
+        const users = get(this, "transaction.event.users") || [];
 
-        return "paid for";
+        return users
+            .filter(user => contributions[get(user, "id")] > 0)
+            .map(user => `${get(user, "name")} (${contributions[get(user, "id")]})`)
+            .join(", ");
     }),
 
     click() {

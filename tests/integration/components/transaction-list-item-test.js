@@ -61,13 +61,16 @@ test("it renders a donation", function (assert) {
 test("it renders a deposit", function (assert) {
     assert.expect(1);
 
+    const bob = { id: 1, name: "Bob" };
+    const alice = { id: 2, name: "Alice" };
+
     const transaction = EmberObject.create({
-        payer: { id: 1, name: "Bob" },
         name: "Flat prepayment",
-        amount: "500",
-        participants: [{ id: 1, name: "Bob" }, { id: 2, name: "Alice" }],
+        amount: "350",
         isDeposit: true,
+        contributions: { 1: 250, 2: 100 },
         event: {
+            users: [bob, alice],
             currency: { code: "USD" },
         },
     });
@@ -77,6 +80,6 @@ test("it renders a deposit", function (assert) {
 
     assert.equal(
         extraTrim(this.$().text()),
-        "Bob deposited for Flat prepayment Bob, Alice 500.00 USD"
+        "Deposit for Flat prepayment Bob (250), Alice (100) 350.00 USD"
     );
 });
