@@ -17,4 +17,14 @@ export default BaseForm.extend({
     maxDate: computed(function () {
         return `${new Date().getFullYear()}-12-31`;
     }),
+
+    actions: {
+        addAmount() {
+            get(this, "formObject").addAmount();
+        },
+
+        removeAmount(entry) {
+            get(this, "formObject").removeAmount(entry);
+        },
+    },
 });

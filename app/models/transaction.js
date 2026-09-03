@@ -8,6 +8,10 @@ import { belongsTo, hasMany } from "ember-data/relationships";
 export default Model.extend(ModelMixin, {
     name: attr("string"),
     amount: attr("number"),
+    // an expense/donation's amount can be entered as several individual
+    // amounts (e.g. a family's several separate purchases) that get summed
+    // into "amount" - empty/absent for a transaction with just one amount
+    amounts: attr({ defaultValue: () => [] }),
     date: attr("string"),
     event: belongsTo("event", { async: false }),
     payer: belongsTo("user", { async: false }),

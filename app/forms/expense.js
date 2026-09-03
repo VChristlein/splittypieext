@@ -1,4 +1,5 @@
 import { equal, or, oneWay } from "@ember/object/computed";
+import { A } from "@ember/array";
 import EmberObject, {
   computed,
   getWithDefault,
@@ -27,13 +28,10 @@ const Validations = buildValidations({
     },
     amount: {
         validators: [
-            validator("presence", {
-                presence: true,
-                // a deposit/itemized expense's amount is derived from its
-                // per-person entries, not typed in directly
-                disabled: oneWay("model.usesContributionEntries"),
-            }),
-            validator("number", { allowString: true, disabled: oneWay("model.usesContributionEntries") }),
+            // amount is always derived now (summed from one or more entries),
+            // so a plain presence check would pass even with nothing entered
+            // (0 isn't "blank") - require it to be a real positive number
+            validator("number", { allowString: true, gt: 0 }),
         ],
     },
     payer: validator("presence", {
@@ -83,6 +81,14 @@ export default FormObject.extend(Validations, {
             : "How much has each person already put in?";
     }),
 
+    // amount is always derived: from amountEntries for an expense/donation,
+    // or from contributionEntries for a deposit/itemized expense
+    amount: computed("usesContributionEntries", "totalAmount", "totalContributions", function () {
+        return get(this, "usesContributionEntries")
+            ? get(this, "totalContributions")
+            : get(this, "totalAmount");
+    }),
+
     init() {
         this._super(...arguments);
         const model = get(this, "model");
@@ -91,13 +97,57 @@ export default FormObject.extend(Validations, {
             this,
             getProperties(
                 model,
-                "name", "isTransfer", "date", "amount", "payer", "participants", "obeyFactors",
-                "type"
+                "name", "isTransfer", "date", "payer", "participants", "obeyFactors", "type"
             )
         );
         set(this, "participants", getWithDefault(model, "participants", []).toArray());
         set(this, "_factorOverrides", Object.assign({}, getWithDefault(model, "participantFactors", {})));
         set(this, "_contributions", Object.assign({}, getWithDefault(model, "contributions", {})));
+
+        const existingAmounts = getWithDefault(model, "amounts", []);
+        const modelAmount = get(model, "amount");
+        const seedAmounts = existingAmounts.length
+            ? existingAmounts
+            : [modelAmount === undefined || modelAmount === null ? null : modelAmount];
+
+        set(this, "_amounts", A(seedAmounts.map(value => ({ value }))));
+    },
+
+    // one row per individual amount making up this transaction's total,
+    // e.g. a family's several separate purchases entered as one transaction
+    amountEntries: computed("_amounts.[]", function () {
+        return get(this, "_amounts").map(holder => EmberObject.extend({
+            value: computed({
+                get() {
+                    return holder.value;
+                },
+                set(key, value) {
+                    holder.value = value;
+
+                    return value;
+                },
+            }),
+        }).create({ _holder: holder }));
+    }),
+
+    hasMultipleAmounts: computed("amountEntries.length", function () {
+        return get(this, "amountEntries.length") > 1;
+    }),
+
+    totalAmount: computed("amountEntries.@each.value", function () {
+        return get(this, "amountEntries").reduce((sum, entry) => {
+            const value = parseFloat(get(entry, "value"));
+
+            return sum + (value > 0 ? value : 0);
+        }, 0);
+    }),
+
+    addAmount() {
+        get(this, "_amounts").pushObject({ value: null });
+    },
+
+    removeAmount(entry) {
+        get(this, "_amounts").removeObject(get(entry, "_holder"));
     },
 
     // one row per person in the event for entering how much they've already
@@ -178,7 +228,8 @@ export default FormObject.extend(Validations, {
             // a deposit has no single payer; an itemized expense does, same
             // as a regular expense
             setProperties(model, {
-                amount: get(this, "totalContributions"),
+                amount: get(this, "amount"),
+                amounts: [],
                 payer: get(this, "isDeposit") ? null : get(this, "payer"),
                 participants: [],
                 participantFactors: {},
@@ -195,10 +246,15 @@ export default FormObject.extend(Validations, {
             participantFactors[get(participant, "id")] = overrides[get(participant, "id")];
         });
 
+        const amounts = get(this, "amountEntries")
+            .map(entry => parseFloat(get(entry, "value")))
+            .filter(value => value > 0);
+
         setProperties(
             model,
             getProperties(this, "amount", "payer", "participants", "obeyFactors")
         );
+        set(model, "amounts", amounts);
         set(model, "participantFactors", participantFactors);
         set(model, "contributions", {});
     },

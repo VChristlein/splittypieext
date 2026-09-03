@@ -16,7 +16,8 @@ test("it renders", function (assert) {
     assert.equal(this.$(".transaction-payer").find(":selected").val(), "");
     assert.equal(this.$(".transaction-name").val(), "");
     assert.equal(this.$(".transaction-name").attr("placeholder"), "Example: Tickets to museum");
-    assert.equal(this.$(".transaction-amount").val(), "");
+    // no transaction bound at all, so there's nothing to seed a row from
+    assert.equal(this.$(".transaction-amount").length, 0);
     assert.equal(this.$(".transaction-obey-factors").is(":checked"), false);
 });
 
@@ -35,6 +36,7 @@ test("it renders with transaction model", function (assert) {
         amount: "200",
         participants: users.slice(1),
         obeyFactors: false,
+        amountEntries: [EmberObject.create({ value: "200" })],
     });
 
     this.set("users", users);
@@ -157,6 +159,50 @@ test("it keeps the payer but swaps the split for exact amounts on an itemized ex
         "How much does each person owe?"
     );
     assert.equal(this.$(".transaction-contributions-total").text().trim(), "Total: 45.00 USD");
+});
+
+test("it shows one amount row by default, with no remove button or total", function (assert) {
+    assert.expect(3);
+
+    const transaction = EmberObject.create({
+        name: "Coffee",
+        hasMultipleAmounts: false,
+        amountEntries: [EmberObject.create({ value: 5 })],
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
+
+    assert.equal(this.$(".transaction-amounts li").length, 1);
+    assert.equal(this.$(".remove-amount").length, 0);
+    assert.equal(this.$(".transaction-amount-total").length, 0);
+});
+
+test("it lets several amounts be entered for one transaction, summed into a total", function (assert) {
+    assert.expect(5);
+
+    const transaction = EmberObject.create({
+        name: "Groceries (several trips)",
+        hasMultipleAmounts: true,
+        amount: 75,
+        amountEntries: [
+            EmberObject.create({ value: 20 }),
+            EmberObject.create({ value: 30 }),
+            EmberObject.create({ value: 25 }),
+        ],
+        event: {
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
+
+    assert.equal(this.$(".transaction-amounts li").length, 3);
+    assert.equal(this.$(".transaction-amount").eq(0).val(), "20");
+    assert.equal(this.$(".transaction-amount").eq(1).val(), "30");
+    assert.equal(this.$(".remove-amount").length, 3);
+    assert.equal(this.$(".transaction-amount-total").text().trim(), "Total: 75.00 USD");
 });
 
 test("it shows an editable factor per participant when obeying factors", function (assert) {
