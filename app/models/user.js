@@ -18,7 +18,7 @@ export default Model.extend(ModelMixin, {
     }),
 
     balance: computed(
-        "event.transactions.{[],@each.amount,@each.payer,@each.participants,@each.obeyFactors,@each.participantFactors}",
+        "event.transactions.{[],@each.amount,@each.payer,@each.participants,@each.obeyFactors,@each.participantFactors,@each.type}",
         "event.users.@each.factor",
         function () {
             const transactions = get(this, "event.transactions");
@@ -26,13 +26,21 @@ export default Model.extend(ModelMixin, {
             const owedTransactions = transactions.filter(
                 t => get(t, "participants").includes(this)
             );
+            // a donation flows the other way: the contributor's balance goes
+            // down and everyone they're crediting goes up, so it's split
+            // exactly like an expense but with the amount's sign flipped
+            const signedAmount = (t) => {
+                const amount = parseFloat(get(t, "amount"));
+
+                return get(t, "isDonation") ? -amount : amount;
+            };
             const paidMoney = paidTransactions.reduce(
-                (acc, t) => acc + parseFloat(get(t, "amount")),
+                (acc, t) => acc + signedAmount(t),
                 0
             );
             const owedMoney = owedTransactions.reduce((acc, t) => {
                 const participants = get(t, "participants");
-                const amount = parseFloat(get(t, "amount"));
+                const amount = signedAmount(t);
 
                 if (get(t, "obeyFactors") === false) {
                     return acc + (amount / participants.length);

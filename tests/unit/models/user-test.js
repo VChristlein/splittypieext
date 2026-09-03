@@ -163,10 +163,11 @@ test("it lets a transaction override a participant's factor just for itself", fu
     assert.equal(family.get("balance"), (-familyOwes).toFixed(2));
 });
 
-test("a donation only credits the contributor, nobody owes it back", function (assert) {
+test("a donation credits everyone it's split among, and debits the donor", function (assert) {
     const store = this.store();
     let alice;
     let bob;
+    let carol;
 
     run(() => {
         const event = store.createRecord("event", {
@@ -177,26 +178,71 @@ test("a donation only credits the contributor, nobody owes it back", function (a
             name: "Bob",
             event,
         });
+        carol = store.createRecord("user", {
+            name: "Carol",
+            event,
+        });
+        // Bob donates towards Alice's gift; the group buying it (Alice and
+        // Carol) gets credited, Bob does not expect anything back
         const donation = store.createRecord("transaction", {
             type: "donation",
             name: "Alice's birthday gift",
             amount: 20,
             payer: bob,
-            participants: [],
+            participants: [alice, carol],
         });
 
         alice.set("event", event);
         event.get("transactions").pushObject(donation);
     });
 
-    assert.equal(bob.get("balance"), (20).toFixed(2));
-    assert.equal(alice.get("balance"), (0).toFixed(2));
+    assert.equal(bob.get("balance"), (-20).toFixed(2));
+    assert.equal(alice.get("balance"), (10).toFixed(2));
+    assert.equal(carol.get("balance"), (10).toFixed(2));
 });
 
-test("a deposit only credits the depositor, nobody owes it back", function (assert) {
+test("a donation credits according to weight, same as an expense would debit", function (assert) {
+    const store = this.store();
+    let bob;
+    let child;
+
+    run(() => {
+        const event = store.createRecord("event", {
+            name: "Test event",
+        });
+        bob = this.subject();
+        child = store.createRecord("user", {
+            name: "Child",
+            factor: 0.5,
+            event,
+        });
+        const another = store.createRecord("user", {
+            name: "Another kid",
+            factor: 0.5,
+            event,
+        });
+        const donation = store.createRecord("transaction", {
+            type: "donation",
+            name: "Gift for the class",
+            amount: 30,
+            payer: bob,
+            participants: [child, another],
+        });
+
+        bob.set("event", event);
+        event.get("transactions").pushObject(donation);
+    });
+
+    // total factor = 0.5 + 0.5 = 1, so each kid gets half of the 30
+    assert.equal(bob.get("balance"), (-30).toFixed(2));
+    assert.equal(child.get("balance"), (15).toFixed(2));
+});
+
+test("a deposit is split among participants just like a regular expense", function (assert) {
     const store = this.store();
     let alice;
     let bob;
+    let carol;
 
     run(() => {
         const event = store.createRecord("event", {
@@ -207,18 +253,25 @@ test("a deposit only credits the depositor, nobody owes it back", function (asse
             name: "Bob",
             event,
         });
+        carol = store.createRecord("user", {
+            name: "Carol",
+            event,
+        });
+        // Bob fronts the flat's deposit for the whole group in one go,
+        // instead of everyone depositing their share individually
         const deposit = store.createRecord("transaction", {
             type: "deposit",
             name: "Flat prepayment",
-            amount: 500,
+            amount: 300,
             payer: bob,
-            participants: [],
+            participants: [alice, bob, carol],
         });
 
         alice.set("event", event);
         event.get("transactions").pushObject(deposit);
     });
 
-    assert.equal(bob.get("balance"), (500).toFixed(2));
-    assert.equal(alice.get("balance"), (0).toFixed(2));
+    assert.equal(bob.get("balance"), (300 - (300 / 3)).toFixed(2));
+    assert.equal(alice.get("balance"), (-(300 / 3)).toFixed(2));
+    assert.equal(carol.get("balance"), (-(300 / 3)).toFixed(2));
 });

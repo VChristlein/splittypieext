@@ -42,7 +42,7 @@ test("it renders a donation", function (assert) {
         payer: { id: 1, name: "Bob" },
         name: "Alice's birthday gift",
         amount: "20",
-        participants: [],
+        participants: [{ id: 2, name: "Alice" }, { id: 3, name: "Carol" }],
         isDonation: true,
         event: {
             currency: { code: "USD" },
@@ -54,7 +54,7 @@ test("it renders a donation", function (assert) {
 
     assert.equal(
         extraTrim(this.$().text()),
-        "Bob donated to the pot for Alice's birthday gift 20.00 USD"
+        "Bob donated for Alice's birthday gift Alice, Carol 20.00 USD"
     );
 });
 
@@ -65,7 +65,7 @@ test("it renders a deposit", function (assert) {
         payer: { id: 1, name: "Bob" },
         name: "Flat prepayment",
         amount: "500",
-        participants: [],
+        participants: [{ id: 1, name: "Bob" }, { id: 2, name: "Alice" }],
         isDeposit: true,
         event: {
             currency: { code: "USD" },
@@ -77,6 +77,6 @@ test("it renders a deposit", function (assert) {
 
     assert.equal(
         extraTrim(this.$().text()),
-        "Bob deposited for Flat prepayment 500.00 USD"
+        "Bob deposited for Flat prepayment Bob, Alice 500.00 USD"
     );
 });

@@ -35,7 +35,6 @@ test("it renders with transaction model", function (assert) {
         amount: "200",
         participants: users.slice(1),
         obeyFactors: false,
-        requiresParticipants: true,
     });
 
     this.set("users", users);
@@ -67,22 +66,29 @@ test("it offers expense, donation and deposit as transaction types", function (a
     assert.equal(this.$(".transaction-type").find(":selected").text().trim(), "Donation (e.g. birthday gift)");
 });
 
-test("it hides the participants section for donations and deposits", function (assert) {
+test("it still shows a participants section for donations, with a contextual label", function (assert) {
     assert.expect(2);
+
+    const alice = { id: 2, name: "Alice" };
+    const carol = { id: 3, name: "Carol" };
 
     const transaction = EmberObject.create({
         payer: { id: 1, name: "Bob" },
         name: "Alice's birthday gift",
         amount: "20",
         type: "donation",
-        requiresParticipants: false,
+        participants: [alice, carol],
+        participantsLabel: "Credit this donation to (split according to their weight):",
     });
 
     this.set("transaction", transaction);
     this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
 
-    assert.equal(this.$(".transaction-participants").length, 0);
-    assert.equal(this.$(".transaction-obey-factors").length, 0);
+    assert.equal(
+        this.$(".transaction-participants").closest(".form-group").find(".control-label").text().trim(),
+        "Credit this donation to (split according to their weight):"
+    );
+    assert.equal(this.$(".transaction-participants").find(":checked").length, 2);
 });
 
 test("it shows an editable factor per participant when obeying factors", function (assert) {
@@ -97,7 +103,6 @@ test("it shows an editable factor per participant when obeying factors", functio
         amount: "200",
         participants: [john, billy],
         obeyFactors: true,
-        requiresParticipants: true,
         participantFactorEntries: [
             EmberObject.create({ participant: john, factor: 1 }),
             EmberObject.create({ participant: billy, factor: 0.5 }),

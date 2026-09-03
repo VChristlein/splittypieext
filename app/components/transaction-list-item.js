@@ -8,6 +8,18 @@ export default Component.extend({
         return get(this, "transaction.participants").getEach("name").join(", ");
     }),
 
+    verb: computed("transaction.{isDonation,isDeposit}", function () {
+        if (get(this, "transaction.isDonation")) {
+            return "donated for";
+        }
+
+        if (get(this, "transaction.isDeposit")) {
+            return "deposited for";
+        }
+
+        return "paid for";
+    }),
+
     click() {
         const onClick = get(this, "onClick");
 
