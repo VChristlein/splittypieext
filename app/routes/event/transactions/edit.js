@@ -1,10 +1,12 @@
 import { inject as service } from "@ember/service";
 import { setProperties, get } from "@ember/object";
 import Route from "@ember/routing/route";
+import translate from "splittypie/utils/translate";
 
 export default Route.extend({
     notify: service(),
     transactionRepository: service(),
+    locale: service(),
 
     model(params) {
         return this.store.findRecord("transaction", params.transaction_id);
@@ -32,7 +34,9 @@ export default Route.extend({
                 .remove(transaction)
                 .then(() => {
                     this.transitionTo("event.transactions");
-                    get(this, "notify").success("Transaction has been deleted.");
+                    get(this, "notify").success(
+                        translate(get(this, "locale.current"), "event.transactionDeletedNotify")
+                    );
                 });
         },
 
@@ -43,7 +47,9 @@ export default Route.extend({
                 .save(event, transaction)
                 .then(() => {
                     this.transitionTo("event.transactions");
-                    get(this, "notify").success("Transaction has been changed.");
+                    get(this, "notify").success(
+                        translate(get(this, "locale.current"), "event.transactionChangedNotify")
+                    );
                 });
         },
     },

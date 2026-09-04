@@ -1,14 +1,19 @@
 import { or } from "@ember/object/computed";
+import { inject as service } from "@ember/service";
 import { get, computed } from "@ember/object";
 import Component from "@ember/component";
+import translate from "splittypie/utils/translate";
 
 export default Component.extend({
     tagName: "li",
     classNames: ["user-form"],
-    placeholder: computed("index", function () {
-        const index = get(this, "index");
+    locale: service(),
 
-        return index === 0 ? "Your name" : "Your friend's name";
+    placeholder: computed("index", "locale.current", function () {
+        const index = get(this, "index");
+        const key = index === 0 ? "userForm.yourName" : "userForm.friendsName";
+
+        return translate(get(this, "locale.current"), key);
     }),
 
     hasError: or("user.formErrors.name.messages", "user.formErrors.factor.messages"),

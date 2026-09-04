@@ -3,10 +3,12 @@ import { inject as service } from "@ember/service";
 import { get } from "@ember/object";
 import BaseForm from "splittypie/components/base-form";
 import exportEventToExcel from "splittypie/utils/export-event-to-excel";
+import translate from "splittypie/utils/translate";
 
 export default BaseForm.extend({
     store: service(),
     notify: service(),
+    locale: service(),
 
     formObject: alias("event"),
     isSubmitted: oneWay("event.isSubmitted"),
@@ -30,7 +32,7 @@ export default BaseForm.extend({
 
         exportToExcel() {
             exportEventToExcel(get(this, "event.model")).catch(() => {
-                get(this, "notify").error("Could not export to Excel");
+                get(this, "notify").error(translate(get(this, "locale.current"), "eventForm.exportError"));
             });
         },
     },

@@ -9,7 +9,7 @@
   <div class="panel panel-default">
     <div class="panel-body">
       <div class="form-group">
-        <label class="control-label">Who settled?</label>
+        <label class="control-label">{{t "transferForm.whoSettled"}}</label>
         <div class="input-group">
           <p class="form-control-static transfer-sender">
             {{transfer.sender.name}}
@@ -18,7 +18,7 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label">With Who?</label>
+        <label class="control-label">{{t "transferForm.withWho"}}</label>
         <div class="input-group">
           <p class="form-control-static transfer-recipient">
             {{transfer.recipient.name}}
@@ -27,7 +27,7 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label">How much?</label>
+        <label class="control-label">{{t "common.howMuch"}}</label>
         <div class="input-group">
           <span class="input-group-addon">{{transfer.event.currency.code}}</span>
           <p class="form-control-static transfer-amount">
@@ -37,7 +37,7 @@
       </div>
 
       <div class="form-group">
-        <label class="control-label">When?</label>
+        <label class="control-label">{{t "transferForm.when"}}</label>
         <p class="form-control-static transfer-date">
           {{transfer.date}}
         </p>
@@ -45,9 +45,9 @@
 
       {{#unless transfer.isNew}}
         <div class="form-group">
-          <label class="control-label">Other options:</label>
+          <label class="control-label">{{t "common.otherOptions"}}</label>
           <div class="input-group">
-            <button {{action "delete"}} class="btn btn-danger delete-transfer">Delete Transfer</button>
+            <button {{action "delete"}} class="btn btn-danger delete-transfer">{{t "transferForm.delete"}}</button>
           </div>
         </div>
       {{/unless}}
@@ -56,7 +56,7 @@
 
   <div class="form-group hidden-xs">
     {{#back-button}}
-      Cancel
+      {{t "common.cancel"}}
     {{/back-button}}
   </div>
 </form>

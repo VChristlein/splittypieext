@@ -1,13 +1,13 @@
 {{#modal-dialog}}
   <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" aria-label="Dismiss">&times;</button>
-    <h4 class="modal-title">Settle Up!</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" aria-label={{t "common.dismiss"}}>&times;</button>
+    <h4 class="modal-title">{{t "settleUp.settleButton"}}</h4>
   </div>
   <div class="modal-body">
-    All settled between {{model.transfer.sender.name}} and {{model.transfer.recipient.name}}?
+    {{t "settleUp.confirmBody" sender=model.transfer.sender.name recipient=model.transfer.recipient.name}}
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-primary" {{action "invokeAction" model.actions.yes}}>Yes</button>
-    <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+    <button type="button" class="btn btn-primary" {{action "invokeAction" model.actions.yes}}>{{t "common.yes"}}</button>
+    <button type="button" class="btn btn-default" data-dismiss="modal">{{t "common.no"}}</button>
   </div>
 {{/modal-dialog}}

@@ -1,7 +1,7 @@
 <div>
-  Showing {{pluralize count "expense"}}
+  {{t "transactionListHeader.showing" count=count word=expenseWord}}
 </div>
 
 <div>
-  Total of <strong>{{format-money total symbol=currency format="%v %s"}}</strong>
+  {{t "common.totalOf"}} <strong>{{format-money-locale total symbol=currency format="%v %s"}}</strong>
 </div>

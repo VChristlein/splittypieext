@@ -1,14 +1,14 @@
 {{#side-menu}}
   <header class="navbar navbar-default">
     <div class="navbar-header">
-      {{#side-menu-link-to "index" class="navbar-brand" title="SplittyPie Home Page"}}
+      {{#side-menu-link-to "index" class="navbar-brand" title=(t "app.homeTitle")}}
         {{partial "shared/brand"}}
       {{/side-menu-link-to}}
     </div>
   </header>
   <div class="content">
     <ul class="nav">
-      <li class="header">Events</li>
+      <li class="header">{{t "nav.events"}}</li>
       {{#each model.previousEvents as |event|}}
         <li>
           {{#side-menu-link-to "event" event.id}}
@@ -20,25 +20,30 @@
       <li>
         {{#side-menu-link-to "new"}}
           {{inline-svg "plus" class="icon"}}
-          New Event
+          {{t "common.newEvent"}}
         {{/side-menu-link-to}}
       </li>
       <li class="divider"></li>
       <li>
         <a href="https://github.com/cowbell/splittypie" target="_blank" rel="noopener">
           {{inline-svg "github" class="icon"}}
-          Source Code
+          {{t "common.sourceCode"}}
         </a>
       </li>
       <li>
         <a href="https://cowbell-labs.com/" target="_blank" rel="noopener">
           {{inline-svg "cowbell" class="icon cowbell"}}
-          Cowbell Labs
+          {{t "common.cowbellLabs"}}
         </a>
+      </li>
+      <li class="divider"></li>
+      <li class="header">{{t "language.label"}}</li>
+      <li>
+        {{switch-locale-dropdown}}
       </li>
     </ul>
     <div class="version">
-      <p>ver. {{app-version}}</p>
+      <p>{{t "app.versionPrefix" version=(app-version)}}</p>
     </div>
   </div>
 {{/side-menu}}

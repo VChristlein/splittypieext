@@ -3,16 +3,16 @@
 {{/if}}
 <div class="transaction-list-item-description">
   {{#if transaction.isTransfer}}
-    <strong>{{transaction.payer.name}}</strong> settled up with <strong>{{transaction.participants.firstObject.name}}</strong>
+    <strong>{{transaction.payer.name}}</strong> {{t "transactionListItem.settledWith"}} <strong>{{transaction.participants.firstObject.name}}</strong>
   {{else if transaction.isDeposit}}
-    Deposit for <em>{{transaction.name}}</em>
+    {{t "transactionListItem.depositFor"}} <em>{{transaction.name}}</em>
     {{#if transaction.payer}}
-      &mdash; collected by <strong>{{transaction.payer.name}}</strong>
+      &mdash; {{t "transactionListItem.collectedBy"}} <strong>{{transaction.payer.name}}</strong>
     {{/if}}
     <br>
     {{inline-svg "user" class="icon"}} <small>{{contributors}}</small>
   {{else if transaction.isItemized}}
-    <strong>{{transaction.payer.name}}</strong> paid for <em>{{transaction.name}}</em><br>
+    <strong>{{transaction.payer.name}}</strong> {{t "transactionListItem.paidFor"}} <em>{{transaction.name}}</em><br>
     {{inline-svg "user" class="icon"}} <small>{{contributors}}</small>
   {{else}}
     <strong>{{transaction.payer.name}}</strong> {{verb}} <em>{{transaction.name}}</em><br>
@@ -21,6 +21,6 @@
 </div>
 <div class="transaction-list-item-amount">
   <strong>
-    {{format-money transaction.amount symbol=transaction.event.currency.code format="%v %s"}}
+    {{format-money-locale transaction.amount symbol=transaction.event.currency.code format="%v %s"}}
   </strong>
 </div>

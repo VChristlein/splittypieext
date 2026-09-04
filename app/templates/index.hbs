@@ -7,20 +7,20 @@
 
 {{#ember-wormhole to="navbar-right"}}
   <ul class="nav navbar-nav navbar-right">
-    {{scroll-to href="#about" label="About"}}
+    {{scroll-to href="#about" label=(t "index.aboutLabel")}}
     {{#if (any model.previousEvents)}}
-      {{scroll-to href="#events" label="Events"}}
+      {{scroll-to href="#events" label=(t "index.eventsLabel")}}
     {{/if}}
-    {{scroll-to href="#features" label="Features"}}
+    {{scroll-to href="#features" label=(t "index.featuresLabel")}}
     <li>
-      <a href="https://github.com/cowbell/splittypie" target="_blank" rel="noopener" title="SplittyPie Source Code">
+      <a href="https://github.com/cowbell/splittypie" target="_blank" rel="noopener" title={{t "common.sourceCodeTitle"}}>
         {{inline-svg "github" class="icon"}}
-        Source
+        {{t "index.source"}}
       </a>
     </li>
-    {{#nav-link-to "new" title="Create New Event"}}
+    {{#nav-link-to "new" title=(t "common.createNewEvent")}}
       {{inline-svg "plus" class="icon"}}
-      New Event
+      {{t "common.newEvent"}}
     {{/nav-link-to}}
   </ul>
 {{/ember-wormhole}}
@@ -29,15 +29,14 @@
   <section id="about">
     <div class="row main">
       <div class="col-sm-7 main-promotion-text">
-        <h1>Easy expense splitting</h1>
+        <h1>{{t "index.heroTitle"}}</h1>
         <p>
-          Create event, add users and their expenses. Splittypie will calculate who owes who and how much exactly.
-          It's <strong>Free</strong> and with <strong class="text-nowrap">No Sign Up</strong>.
+          {{{t "index.heroBody"}}}
         </p>
-        <p>{{link-to "Create New Event" "new" class="btn btn-lg btn-success"}}</p>
+        <p>{{link-to (t "common.createNewEvent") "new" class="btn btn-lg btn-success"}}</p>
       </div>
       <div class="col-sm-5 main-promotion-image">
-        <img src="/assets/app_iphone.png" alt="App preview on iOS">
+        <img src="/assets/app_iphone.png" alt={{t "index.heroImgAlt"}}>
       </div>
     </div>
   </section>
@@ -47,70 +46,63 @@
   {{/if}}
 
   <section id="features">
-    <h3 class="text-center">Find more about Splittypie</h3>
+    <h3 class="text-center">{{t "index.featuresHeading"}}</h3>
 
     <div class="row">
       <div class="col-md-4 text-center">
         <div class="feature-img-container">
-          <img src="/assets/responsive.jpg" alt="Works anywhere. Responsive">
+          <img src="/assets/responsive.jpg" alt={{t "index.feature1ImgAlt"}}>
         </div>
-        <h4>Works anywhere</h4>
+        <h4>{{t "index.feature1Title"}}</h4>
         <p>
-          Accessible on any device with modern web browser.
-          It has look and feel of mobile device application
-          thanks to resposive design.
+          {{t "index.feature1Body"}}
         </p>
       </div>
       <div class="col-md-4 text-center">
         <div class="feature-img-container">
-          <img src="/assets/stopwatch.png" alt="Fast and realtime">
+          <img src="/assets/stopwatch.png" alt={{t "index.feature2ImgAlt"}}>
         </div>
-        <h4>Fast and realtime</h4>
+        <h4>{{t "index.feature2Title"}}</h4>
         <p>
-          It's really fast and dynamic.
-          What's more, your friends will see all your changes
-          in realtime without refreshing page!
+          {{t "index.feature2Body"}}
         </p>
       </div>
       <div class="col-md-4 text-center">
         <div class="feature-img-container">
-          <img src="/assets/offline.png" alt="Offline Enabled">
+          <img src="/assets/offline.png" alt={{t "index.feature3ImgAlt"}}>
         </div>
-        <h4>Offline Enabled</h4>
+        <h4>{{t "index.feature3Title"}}</h4>
         <p>
-          SplittyPie is an offline-first application.
-          It works when there is no Internet connection
-          and syncs seamlessly where there is.
+          {{t "index.feature3Body"}}
         </p>
       </div>
     </div>
     <div class="row">
       <div class="col-md-4 text-center">
         <div class="feature-img-container">
-          <img src="/assets/free.png" alt="Free of charge">
+          <img src="/assets/free.png" alt={{t "index.feature4ImgAlt"}}>
         </div>
-        <h4>Free to use</h4>
+        <h4>{{t "index.feature4Title"}}</h4>
         <p>
-          It's completely free of charge.
-          No Sign In, No Registration, No Commitments.
+          {{t "index.feature4Body"}}
         </p>
       </div>
       <div class="col-md-4 text-center">
         <div class="feature-img-container">
-          <img src="/assets/share.png" alt="Easy to share">
+          <img src="/assets/share.png" alt={{t "index.feature5ImgAlt"}}>
         </div>
-        <h4>Easy to share</h4>
+        <h4>{{t "index.feature5Title"}}</h4>
         <p>
-          To share just pass a link to a friend, that's it.
+          {{t "index.feature5Body"}}
         </p>
       </div>
       <div class="col-md-4 text-center">
         <div class="feature-img-container">
-          <img src="/assets/open-source.png" alt="Open Source">
+          <img src="/assets/open-source.png" alt={{t "index.feature6ImgAlt"}}>
         </div>
-        <h4>Open Source</h4>
+        <h4>{{t "index.feature6Title"}}</h4>
         <p>
-          Yes, it's open source. Check out the code on <a href="https://github.com/cowbell/splittypie" target="_blank" rel="noopener" title="SplittyPie Source Code">github</a>.
+          {{{t "index.feature6Body"}}}
         </p>
       </div>
     </div>
@@ -119,16 +111,16 @@
   <div class="small-border"></div>
 
   <section class="social-list">
-    <a href="https://github.com/cowbell/splittypie" target="_blank" rel="noopener" title="SplittyPie Source Code">
+    <a href="https://github.com/cowbell/splittypie" target="_blank" rel="noopener" title={{t "common.sourceCodeTitle"}}>
       {{inline-svg "github" class="icon icon-md"}}
     </a>
-    <a href="https://cowbell-labs.com" target="_blank" rel="noopener" title="Author Cowbell-Labs Page">
+    <a href="https://cowbell-labs.com" target="_blank" rel="noopener" title={{t "common.cowbellLabsTitle"}}>
       {{inline-svg "cowbell" class="icon icon-md cowbell"}}
     </a>
-    <a href="https://facebook.com/splittypie" target="_blank" rel="noopener" title="Facebook Page">
+    <a href="https://facebook.com/splittypie" target="_blank" rel="noopener" title={{t "index.facebookTitle"}}>
       {{inline-svg "facebook" class="icon icon-md"}}
     </a>
-    <a href="https://twitter.com/splittypie" target="_blank" rel="noopener" title="Twitter Page">
+    <a href="https://twitter.com/splittypie" target="_blank" rel="noopener" title={{t "index.twitterTitle"}}>
       {{inline-svg "twitter" class="icon icon-md"}}
     </a>
   </section>

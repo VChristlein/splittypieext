@@ -2,12 +2,14 @@ import { inject as service } from "@ember/service";
 import { setProperties, get } from "@ember/object";
 import RSVP from "rsvp";
 import Route from "@ember/routing/route";
+import translate from "splittypie/utils/translate";
 
 export default Route.extend({
     localStorage: service(),
     notify: service(),
     eventRepository: service(),
     syncer: service(),
+    locale: service(),
 
     model() {
         return RSVP.hash({
@@ -37,7 +39,7 @@ export default Route.extend({
                     const storage = get(this, "localStorage");
                     storage.removeItem("lastEventId");
                     this.transitionTo("index");
-                    get(this, "notify").success("Event has been deleted.");
+                    get(this, "notify").success(translate(get(this, "locale.current"), "event.deletedNotify"));
                 });
         },
 
@@ -45,13 +47,13 @@ export default Route.extend({
             get(this, "eventRepository").save(event)
                 .then(() => {
                     this.transitionTo("event");
-                    get(this, "notify").success("Event has been changed");
+                    get(this, "notify").success(translate(get(this, "locale.current"), "event.changedNotify"));
                 });
         },
 
         syncOnline(event) {
             get(this, "syncer").pushEventOnline(event).then(() => {
-                get(this, "notify").success("Event was successfully synced");
+                get(this, "notify").success(translate(get(this, "locale.current"), "event.syncedNotify"));
             });
         },
     },

@@ -1,6 +1,6 @@
 <div class="text-center">
-  <h1>Something went wrong</h1>
+  <h1>{{t "errors.unknownTitle"}}</h1>
   <p class="lead">
-    Please try refresh page. If it still doesn't work you may want return to the {{link-to "Home page" "index"}}.
+    {{t "errors.unknownBodyPre"}} {{link-to (t "common.homePage") "index"}}{{t "errors.unknownBodyPost"}}
   </p>
 </div>

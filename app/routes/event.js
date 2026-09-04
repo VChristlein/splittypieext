@@ -7,6 +7,7 @@ import {
 } from "@ember/object";
 import Route from "@ember/routing/route";
 import isMobile from "splittypie/utils/is-mobile";
+import translate from "splittypie/utils/translate";
 
 export default Route.extend({
     connection: service(),
@@ -17,6 +18,7 @@ export default Route.extend({
     syncer: service(),
     transactionRepository: service(),
     userContext: service(),
+    locale: service(),
 
     init() {
         this._super(...arguments);
@@ -77,7 +79,9 @@ export default Route.extend({
             const event = this.modelFor("event");
 
             get(this, "userContext").change(event, user);
-            get(this, "notify").success(`Now you are watching this event as ${user.get("name")}`);
+            get(this, "notify").success(
+                translate(get(this, "locale.current"), "event.viewingAsNotify", { name: user.get("name") })
+            );
         },
 
         showQuickAdd() {
@@ -98,7 +102,9 @@ export default Route.extend({
             repository
                 .save(event, transaction)
                 .then(() => {
-                    get(this, "notify").success("Transaction has been saved.");
+                    get(this, "notify").success(
+                        translate(get(this, "locale.current"), "event.transactionSavedNotify")
+                    );
                 });
         },
 

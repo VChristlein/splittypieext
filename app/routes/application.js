@@ -4,11 +4,13 @@ import { schedule } from "@ember/runloop";
 import RSVP from "rsvp";
 import Route from "@ember/routing/route";
 import { setProperties, get } from "@ember/object";
+import translate from "splittypie/utils/translate";
 
 export default Route.extend({
     modal: service(),
     syncer: service(),
     notify: service(),
+    locale: service(),
 
     init() {
         this._super(...arguments);
@@ -54,11 +56,12 @@ export default Route.extend({
 
     synchronizationConflict(conflict) {
         if (conflict.type === "not-found-online" && conflict.modelName === "event") {
-            const message = `
-Looks like event ${conflict.model.name} was removed from the online storage.
-We are marking it as "Offline", you could synchronize it back to online store
-in event's details view.
-`;
+            const message = translate(
+                get(this, "locale.current"),
+                "event.syncConflict",
+                { name: conflict.model.name }
+            );
+
             get(this, "notify").error(message, { closeAfter: null });
         }
     },

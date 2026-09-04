@@ -1,11 +1,13 @@
 import { inject as service } from "@ember/service";
 import { get } from "@ember/object";
 import Route from "@ember/routing/route";
+import translate from "splittypie/utils/translate";
 
 export default Route.extend({
     modal: service(),
     notify: service(),
     transactionRepository: service(),
+    locale: service(),
 
     actions: {
         settleUp(transfer) {
@@ -27,13 +29,13 @@ export default Route.extend({
                             .then(() => {
                                 get(this, "modal").trigger("hide");
                                 get(this, "notify").success(
-                                    "Everything settled"
+                                    translate(get(this, "locale.current"), "settleUp.success")
                                 );
                             })
                             .catch(() => {
                                 get(this, "modal").trigger("hide");
                                 get(this, "notify").error(
-                                    "An error occured"
+                                    translate(get(this, "locale.current"), "settleUp.error")
                                 );
                             });
                     },

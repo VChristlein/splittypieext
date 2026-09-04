@@ -1,6 +1,6 @@
 <div class="text-center">
-  <h1>Sorry, that page doesn't exist!</h1>
+  <h1>{{t "errors.notFoundTitle"}}</h1>
   <p class="lead">
-    Check if your url is correct. You may also return to the {{link-to "Home page" "index"}}.
+    {{t "errors.notFoundBodyPre"}} {{link-to (t "common.homePage") "index"}}{{t "errors.notFoundBodyPost"}}
   </p>
 </div>

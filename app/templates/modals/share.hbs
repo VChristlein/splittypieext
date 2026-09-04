@@ -1,11 +1,11 @@
 {{#modal-dialog}}
   <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" aria-label="Close">&times;</button>
-    <h4 class="modal-title">Share this event with your friends</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" aria-label={{t "common.close"}}>&times;</button>
+    <h4 class="modal-title">{{t "share.title"}}</h4>
   </div>
   <div class="modal-body">
     <p class="lead">
-      Now give the following link to your friend.
+      {{t "share.body"}}
     </p>
 
     {{event-url value=model.event.url}}

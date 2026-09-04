@@ -1,4 +1,5 @@
 import { equal, or, oneWay } from "@ember/object/computed";
+import { inject as service } from "@ember/service";
 import { A } from "@ember/array";
 import EmberObject, {
   computed,
@@ -11,13 +12,21 @@ import EmberObject, {
 import { validator, buildValidations } from "ember-cp-validations";
 
 import FormObject from "./form-object";
+import translate from "splittypie/utils/translate";
 
-export const TRANSACTION_TYPES = [
-    { value: "expense", label: "Expense" },
-    { value: "donation", label: "Donation (e.g. birthday gift)" },
-    { value: "deposit", label: "Deposit (e.g. prepayment)" },
-    { value: "itemized", label: "Itemized expense (exact amount per person)" },
+const TRANSACTION_TYPE_KEYS = [
+    { value: "expense", labelKey: "transactionType.expense" },
+    { value: "donation", labelKey: "transactionType.donation" },
+    { value: "deposit", labelKey: "transactionType.deposit" },
+    { value: "itemized", labelKey: "transactionType.itemized" },
 ];
+
+export function transactionTypesFor(locale) {
+    return TRANSACTION_TYPE_KEYS.map(({ value, labelKey }) => ({
+        value,
+        label: translate(locale, labelKey),
+    }));
+}
 
 const Validations = buildValidations({
     name: {
@@ -47,6 +56,8 @@ const Validations = buildValidations({
 export default FormObject.extend(Validations, {
     modelName: "transaction",
 
+    locale: service(),
+
     event: oneWay("model.event"),
     isSaving: oneWay("event.isSaving"),
 
@@ -54,9 +65,9 @@ export default FormObject.extend(Validations, {
     isItemized: equal("type", "itemized"),
     usesContributionEntries: or("isDeposit", "isItemized"),
 
-    selectedTransactionType: computed("type", {
+    selectedTransactionType: computed("type", "locale.current", {
         get() {
-            return TRANSACTION_TYPES.findBy("value", get(this, "type"));
+            return transactionTypesFor(get(this, "locale.current")).findBy("value", get(this, "type"));
         },
         set(key, option) {
             set(this, "type", get(option, "value"));
@@ -65,23 +76,30 @@ export default FormObject.extend(Validations, {
         },
     }),
 
-    payerLabel: computed("type", function () {
-        return {
-            donation: "Who's donating?",
-            deposit: "Who is this going to? (optional)",
-        }[get(this, "type")] || "Who paid?";
+    payerLabel: computed("type", "locale.current", function () {
+        const locale = get(this, "locale.current");
+        const key = {
+            donation: "transactionForm.payerLabelDonation",
+            deposit: "transactionForm.payerLabelDeposit",
+        }[get(this, "type")] || "transactionForm.payerLabelDefault";
+
+        return translate(locale, key);
     }),
 
-    participantsLabel: computed("type", function () {
-        return get(this, "type") === "donation"
-            ? "Credit this donation to (split according to their weight):"
-            : "Divide the cost among:";
+    participantsLabel: computed("type", "locale.current", function () {
+        const key = get(this, "type") === "donation"
+            ? "transactionForm.participantsLabelDonation"
+            : "transactionForm.participantsLabelDefault";
+
+        return translate(get(this, "locale.current"), key);
     }),
 
-    contributionsLabel: computed("type", function () {
-        return get(this, "isItemized")
-            ? "How much does each person owe?"
-            : "How much has each person already put in?";
+    contributionsLabel: computed("isItemized", "locale.current", function () {
+        const key = get(this, "isItemized")
+            ? "transactionForm.contributionsLabelItemized"
+            : "transactionForm.contributionsLabelDeposit";
+
+        return translate(get(this, "locale.current"), key);
     }),
 
     // amount is always derived: from amountEntries for an expense/donation,

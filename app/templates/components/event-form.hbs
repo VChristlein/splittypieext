@@ -12,19 +12,19 @@
   <div class="panel panel-default">
     <div class="panel-body">
       <div class="form-group {{if event.formErrors.name.messages "has-error"}}">
-        <label class="control-label">Event Name</label>
-        {{input value=event.name class="form-control event-name" placeholder="Example: Trip to Barcelona"}}
+        <label class="control-label">{{t "eventForm.nameLabel"}}</label>
+        {{input value=event.name class="form-control event-name" placeholder=(t "eventForm.namePlaceholder")}}
         <div class="help-block with-errors">
           {{event.formErrors.name.message}}
         </div>
       </div>
       <div class="form-group {{if event.formErrors.currency.message "has-error"}}">
-        <label class="control-label">Currency</label>
+        <label class="control-label">{{t "eventForm.currencyLabel"}}</label>
         {{my-select
           selectClass="event-currency"
           options=currencies
           selected=event.currency
-          prompt="Select currency..."
+          prompt=(t "eventForm.currencyPrompt")
           optionValuePath="code"
           optionLabelPath="nameWithCode"
         }}
@@ -33,26 +33,24 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="control-label">Participants</label>
+        <label class="control-label">{{t "eventForm.participantsLabel"}}</label>
         <p class="help-block">
-          The number next to each name is their <strong>factor</strong> &mdash; how much of the
-          bill they count for when costs are split. Leave it at 1 for a regular adult, or lower it
-          for e.g. a child (0.5) or raise it for e.g. a family entered as one person (3).
+          {{{t "eventForm.factorHelp"}}}
         </p>
         {{user-list users=event.users}}
-        <button type="button" class="btn btn-primary add-user" {{action "addUser"}}>Add Participant</button>
+        <button type="button" class="btn btn-primary add-user" {{action "addUser"}}>{{t "eventForm.addParticipant"}}</button>
       </div>
 
       {{#unless event.isNew}}
         <div class="form-group">
-          <label class="control-label">Other options:</label>
+          <label class="control-label">{{t "common.otherOptions"}}</label>
           <div class="input-group">
-            <button {{action "delete"}} class="btn btn-danger delete-event">Delete Event</button>
+            <button {{action "delete"}} class="btn btn-danger delete-event">{{t "eventForm.delete"}}</button>
             &nbsp;
-            <button type="button" {{action "exportToExcel"}} class="btn btn-default export-excel">Export to Excel</button>
+            <button type="button" {{action "exportToExcel"}} class="btn btn-default export-excel">{{t "eventForm.exportExcel"}}</button>
             {{#if event.isOffline}}
               &nbsp;
-              <button {{action "syncOnline"}} class="btn btn-success sync-online">Sync Online</button>
+              <button {{action "syncOnline"}} class="btn btn-success sync-online">{{t "eventForm.syncOnline"}}</button>
             {{/if}}
           </div>
         </div>
@@ -64,9 +62,9 @@
     <button type="submit" {{action "save"}} disabled={{event.isSaving}} class="btn btn-success save-event">
       {{saveButtonText}}
     </button>
-    or
+    {{t "common.or"}}
     {{#back-button}}
-      Cancel
+      {{t "common.cancel"}}
     {{/back-button}}
   </div>
 </form>

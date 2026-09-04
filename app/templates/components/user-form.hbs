@@ -1,10 +1,10 @@
 <div class="form-group {{if hasError "has-error"}}">
   <div class="input-group">
     {{input value=user.name class="user-name form-control" placeholder=placeholder}}
-    <span class="input-group-addon user-factor-addon" title="Factor used to split expenses, e.g. 0.5 for a child or 2 for a couple/family">×</span>
+    <span class="input-group-addon user-factor-addon" title={{t "userForm.factorTitle"}}>×</span>
     {{input value=user.factor type="number" step="0.1" min="0" class="user-factor form-control" placeholder="1"}}
     <span class="input-group-btn">
-      <button class="btn btn-danger remove-user" type="button" disabled={{isRemoveDisabled}} {{action "delete" user}}>Delete</button>
+      <button class="btn btn-danger remove-user" type="button" disabled={{isRemoveDisabled}} {{action "delete" user}}>{{t "common.delete"}}</button>
     </span>
   </div>
   <div class="help-block with-errors">

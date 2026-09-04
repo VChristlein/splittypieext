@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "splittypieext-6e226",
     "public": "dist",
     "ignore": [
       "firebase.json",

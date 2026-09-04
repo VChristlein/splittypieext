@@ -4,7 +4,7 @@
 </button>
 <ul class="dropdown-menu" aria-labelledby="dropDownEvents">
   {{#if anyOtherEvents}}
-    <li class="dropdown-header">Switch to</li>
+    <li class="dropdown-header">{{t "common.switchTo"}}</li>
     {{#each otherEvents as |event|}}
       <li>
         {{#link-to "event.index" event.id}}
@@ -17,7 +17,7 @@
   <li>
     {{#link-to "new"}}
       {{inline-svg "plus" class="icon"}}
-      Add New Event
+      {{t "common.addNewEvent"}}
     {{/link-to}}
   </li>
 </ul>

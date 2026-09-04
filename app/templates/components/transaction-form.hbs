@@ -12,7 +12,7 @@
   <div class="panel panel-default">
     <div class="panel-body">
       <div class="form-group">
-        <label class="control-label">What kind of transaction?</label>
+        <label class="control-label">{{t "transactionForm.typeLabel"}}</label>
         {{my-select
           class="transaction-type"
           options=transactionTypes
@@ -28,7 +28,7 @@
           class="transaction-payer"
           options=users
           selected=transaction.payer
-          prompt="Select payer..."
+          prompt=(t "transactionForm.selectPayerPrompt")
           optionValuePath="id"
           optionLabelPath="name"
         }}
@@ -38,8 +38,8 @@
       </div>
 
       <div class="form-group {{if transaction.formErrors.name.message "has-error"}}">
-        <label class="control-label">For what?</label>
-        {{input value=transaction.name class="form-control transaction-name" placeholder="Example: Tickets to museum"}}
+        <label class="control-label">{{t "transactionForm.nameLabel"}}</label>
+        {{input value=transaction.name class="form-control transaction-name" placeholder=(t "transactionForm.namePlaceholder")}}
         <div class="help-block with-errors">
           {{transaction.formErrors.name.message}}
         </div>
@@ -47,7 +47,7 @@
 
       {{#unless transaction.usesContributionEntries}}
         <div class="form-group {{if transaction.formErrors.amount.message "has-error"}}">
-          <label class="control-label">How much?</label>
+          <label class="control-label">{{t "common.howMuch"}}</label>
           <ul class="list-unstyled transaction-amounts">
             {{#each transaction.amountEntries as |entry|}}
               <li>
@@ -58,7 +58,7 @@
                     type="number"
                     step="0.01"
                     class="form-control transaction-amount"
-                    placeholder="Amount"
+                    placeholder=(t "transactionForm.amountPlaceholder")
                   }}
                   {{#if transaction.hasMultipleAmounts}}
                     <span class="input-group-btn">
@@ -66,7 +66,7 @@
                           type="button"
                           class="btn btn-danger remove-amount"
                           {{action "removeAmount" entry}}
-                          aria-label="Remove amount">
+                          aria-label={{t "transactionForm.removeAmountAriaLabel"}}>
                         &times;
                       </button>
                     </span>
@@ -76,11 +76,11 @@
             {{/each}}
           </ul>
           <button type="button" class="btn btn-default add-amount" {{action "addAmount"}}>
-            + Add another amount
+            {{t "transactionForm.addAnotherAmount"}}
           </button>
           {{#if transaction.hasMultipleAmounts}}
             <p class="help-block transaction-amount-total">
-              Total: {{format-money transaction.amount symbol=transaction.event.currency.code format="%v %s"}}
+              {{t "common.total"}} {{format-money-locale transaction.amount symbol=transaction.event.currency.code format="%v %s"}}
             </p>
           {{/if}}
           <div class="help-block with-errors">
@@ -90,7 +90,7 @@
       {{/unless}}
 
       <div class="form-group {{if transaction.formErrors.date.message "has-error"}}">
-        <label class="control-label">When? (this is optional)</label>
+        <label class="control-label">{{t "transactionForm.dateLabel"}}</label>
         {{date-picker value=transaction.date className="transaction-date" min="2000-01-01" max=maxDate}}
         <div class="help-block with-errors">
           {{transaction.formErrors.date.message}}
@@ -112,7 +112,7 @@
             {{/each}}
           </ul>
           <p class="help-block transaction-contributions-total">
-            Total: {{format-money transaction.totalContributions symbol=transaction.event.currency.code format="%v %s"}}
+            {{t "common.total"}} {{format-money-locale transaction.totalContributions symbol=transaction.event.currency.code format="%v %s"}}
           </p>
         </div>
       {{else}}
@@ -132,7 +132,7 @@
           <div class="checkbox">
             <label>
               {{input type="checkbox" class="transaction-obey-factors" checked=transaction.obeyFactors}}
-              Obey factors
+              {{t "transactionForm.obeyFactors"}}
             </label>
           </div>
 
@@ -153,9 +153,9 @@
 
       {{#unless transaction.isNew}}
         <div class="form-group">
-          <label class="control-label">Other options:</label>
+          <label class="control-label">{{t "common.otherOptions"}}</label>
           <div class="input-group">
-            <button {{action "delete"}} class="btn btn-danger delete-transaction">Delete Transaction</button>
+            <button {{action "delete"}} class="btn btn-danger delete-transaction">{{t "transactionForm.delete"}}</button>
           </div>
         </div>
       {{/unless}}
@@ -166,9 +166,9 @@
     <button {{action "save"}} type="submit" disabled={{transaction.isSaving}} class="btn btn-success save-transaction">
       {{saveButtonText}}
     </button>
-    or
+    {{t "common.or"}}
     {{#back-button}}
-      Cancel
+      {{t "common.cancel"}}
     {{/back-button}}
   </div>
 </form>

@@ -1,0 +1,9 @@
+<ul class="list-inline switch-locale">
+  {{#each availableLocales as |option|}}
+    <li>
+      <a href="#" class={{if (is-equal option.code locale.current) "active"}} {{action "change" option}}>
+        {{option.name}}
+      </a>
+    </li>
+  {{/each}}
+</ul>

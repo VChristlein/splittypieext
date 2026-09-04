@@ -7,11 +7,13 @@ import EmberObject, {
 } from "@ember/object";
 import Route from "@ember/routing/route";
 import moment from "moment";
+import translate from "splittypie/utils/translate";
 
 export default Route.extend({
     notify: service(),
     transactionRepository: service(),
     userContext: service(),
+    locale: service(),
 
     model(params) {
         const amount = getWithDefault(params, "amount", null);
@@ -57,7 +59,9 @@ export default Route.extend({
                 .save(event, transaction)
                 .then(() => {
                     this.transitionTo("event.transactions");
-                    get(this, "notify").success("New transaction has been added");
+                    get(this, "notify").success(
+                        translate(get(this, "locale.current"), "event.transactionAddedNotify")
+                    );
                 });
         },
     },
