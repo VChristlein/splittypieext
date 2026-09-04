@@ -15,7 +15,10 @@ module.exports = {
         '--disable-gpu',
         '--headless',
         '--remote-debugging-port=0',
-        '--window-size=1440,900'
+        '--window-size=1440,900',
+        // acceptance tests hit a local firebase-server emulator at this
+        // host; map it to localhost so it works without an /etc/hosts entry
+        '--host-resolver-rules=MAP localhost.firebaseio.test 127.0.0.1'
       ].filter(Boolean)
     }
   }

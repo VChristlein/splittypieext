@@ -67,12 +67,15 @@ export default FormObject.extend(Validations, {
     // the event's own currency until the user picks a different one. Note:
     // an unset async belongsTo (an unloaded "currency") still resolves to a
     // truthy PromiseObject wrapping null content, so a plain `||` fallback
-    // would never reach event.currency - checking "id" tells them apart
+    // would never reach event.currency - checking "id" tells them apart. A
+    // brand new transaction's model is a plain EmberObject though (not an
+    // ember-data record), so _currency can genuinely be undefined there -
+    // get() throws on an undefined target, hence the `currency &&` guard
     transactionCurrency: computed("_currency", "event.currency", {
         get() {
             const currency = get(this, "_currency");
 
-            return get(currency, "id") ? currency : get(this, "event.currency");
+            return currency && get(currency, "id") ? currency : get(this, "event.currency");
         },
         set(key, currency) {
             set(this, "_currency", currency);
@@ -202,16 +205,21 @@ export default FormObject.extend(Validations, {
 
         // once a foreign currency is set, the entry fields should show/edit
         // what was actually typed in (originalAmounts/originalContributions),
-        // not the already-converted amounts/contributions used for balances
-        const originalContributions = getWithDefault(model, "originalContributions", {});
+        // not the already-converted amounts/contributions used for balances.
+        // Note: getWithDefault only substitutes its default for `undefined`,
+        // but a transaction saved before these fields existed can come back
+        // from the offline/localforage store with them explicitly `null`
+        const originalContributions = getWithDefault(model, "originalContributions", {}) || {};
         const contributions = Object.keys(originalContributions).length
             ? originalContributions
-            : getWithDefault(model, "contributions", {});
+            : (getWithDefault(model, "contributions", {}) || {});
 
         set(this, "_contributions", Object.assign({}, contributions));
 
-        const originalAmounts = getWithDefault(model, "originalAmounts", []);
-        const existingAmounts = originalAmounts.length ? originalAmounts : getWithDefault(model, "amounts", []);
+        const originalAmounts = getWithDefault(model, "originalAmounts", []) || [];
+        const existingAmounts = originalAmounts.length
+            ? originalAmounts
+            : (getWithDefault(model, "amounts", []) || []);
         const modelAmount = get(model, "amount");
         const seedAmounts = existingAmounts.length
             ? existingAmounts

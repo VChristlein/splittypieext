@@ -22,6 +22,7 @@ module.exports = {
       files: [
         'testem.js',
         'ember-cli-build.js',
+        'node-legacy-shim.js',
         'config/**/*.js',
         'lib/*/index.js'
       ],
