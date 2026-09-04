@@ -6,6 +6,30 @@
 SplittyPie is an offline-first Ember application. It's mobile friendly and
 follows [Progressive Web App concept.](https://developers.google.com/web/progressive-web-apps/)
 
+## New in this fork
+
+This fork ([VChristlein/splittypieext](https://github.com/VChristlein/splittypieext)) extends the
+original SplittyPie with:
+
+* **Per-user factors** &mdash; assign each person a weight (e.g. `0.5` for a child, `3` for a
+  family entered as one person) used to split expenses proportionally instead of always evenly.
+* **Per-transaction factor control** &mdash; an "Obey factors" toggle to fall back to an even
+  split for a single expense, plus the ability to override any participant's factor just for that
+  one transaction.
+* **Donations** &mdash; a single contributor's money credited to everyone it's split among (by
+  weight), for things like chipping in on a birthday gift.
+* **Deposits** &mdash; record several people's individual prepayments directly (no splitting),
+  optionally directed at one person collecting the money (e.g. for a flat booking).
+* **Itemized expenses** &mdash; split a bill by exact amount per person instead of by weight, when
+  everyone owes a different, known amount.
+* **Multiple amounts per transaction** &mdash; enter several individual purchases (e.g. a family's
+  separate shopping trips) under one transaction, automatically summed.
+* **Excel export** &mdash; download an event's full transaction history and closing balances as a
+  `.xlsx`, with live formulas (not just static numbers) so the sheet stays correct if you tweak a
+  value.
+
+See the rest of this README for the original project's setup and usage instructions.
+
 ## Prerequisites
 
 You will need the following things properly installed on your computer.
