@@ -24,9 +24,15 @@ original SplittyPie with:
   everyone owes a different, known amount.
 * **Multiple amounts per transaction** &mdash; enter several individual purchases (e.g. a family's
   separate shopping trips) under one transaction, automatically summed.
+* **Per-transaction currency** &mdash; pay for a single expense in a different currency than the
+  event's own. The exchange rate is fetched automatically (via the free
+  [Frankfurter](https://frankfurter.dev) API) and can be overridden manually; amounts are shown in
+  both currencies.
 * **Excel export** &mdash; download an event's full transaction history and closing balances as a
   `.xlsx`, with live formulas (not just static numbers) so the sheet stays correct if you tweak a
   value.
+* **English/German language switcher** &mdash; a language toggle in the side menu; German also
+  formats numbers the German way (`1.234,56` instead of `1,234.56`).
 
 See the rest of this README for the original project's setup and usage instructions.
 
