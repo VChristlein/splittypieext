@@ -21,6 +21,7 @@ export default Route.extend({
         setProperties(controller, {
             form,
             users: get(this.modelFor("event"), "users"),
+            currencies: this.store.findAll("currency"),
         });
     },
 

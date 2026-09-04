@@ -25,6 +25,41 @@ export default Model.extend(ModelMixin, {
     // already put in (credited); for an itemized expense, how much each
     // person specifically owes the payer (debited)
     contributions: attr({ defaultValue: () => ({}) }),
+    // when set, this transaction was actually paid in a different currency
+    // than the event's - "amount"/"amounts"/"contributions" always stay in
+    // the event's currency (already multiplied by exchangeRate) so balance
+    // math never has to think about currencies; "originalAmounts"/
+    // "originalContributions" keep what was actually typed in, in this
+    // currency, purely so the form can show/edit them un-converted later
+    currency: belongsTo("currency", { async: true }),
+    exchangeRate: attr("number", { defaultValue: 1 }),
+    originalAmounts: attr({ defaultValue: () => [] }),
+    originalContributions: attr({ defaultValue: () => ({}) }),
+
+    // the pre-conversion total, for display next to the converted amount -
+    // falls back to 0 (rather than the converted amount) when there's no
+    // foreign currency, since callers should only show this when "currency"
+    // is set
+    originalAmount: computed("originalAmounts.[]", "originalContributions", function () {
+        const amounts = get(this, "originalAmounts") || [];
+
+        if (amounts.length) {
+            return amounts.reduce((sum, value) => {
+                const parsed = parseFloat(value);
+
+                return sum + (parsed > 0 ? parsed : 0);
+            }, 0);
+        }
+
+        const contributions = get(this, "originalContributions") || {};
+
+        return Object.values(contributions).reduce((sum, value) => {
+            const parsed = parseFloat(value);
+
+            return sum + (parsed > 0 ? parsed : 0);
+        }, 0);
+    }),
+
     typeOrDefault: computed("type", {
         // FIXME: I don't like this typeOrDefault
         get() {

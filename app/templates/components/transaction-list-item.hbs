@@ -23,4 +23,10 @@
   <strong>
     {{format-money-locale transaction.amount symbol=transaction.event.currency.code format="%v %s"}}
   </strong>
+  {{#if transaction.currency}}
+    <br>
+    <small class="text-muted transaction-original-amount">
+      {{format-money-locale transaction.originalAmount symbol=transaction.currency.code format="%v %s"}}
+    </small>
+  {{/if}}
 </div>

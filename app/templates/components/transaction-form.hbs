@@ -45,6 +45,40 @@
         </div>
       </div>
 
+      {{#if currencies}}
+        <div class="form-group">
+          <label class="control-label">{{t "transactionForm.currencyLabel"}}</label>
+          {{my-select
+            class="transaction-currency"
+            options=currencies
+            selected=transaction.transactionCurrency
+            optionValuePath="code"
+            optionLabelPath="nameWithCode"
+          }}
+
+          {{#if transaction.isForeignCurrency}}
+            <div class="input-group transaction-exchange-rate">
+              <span class="input-group-addon">
+                {{t "transactionForm.exchangeRateLabel" from=transaction.transactionCurrency.code to=transaction.event.currency.code}}
+              </span>
+              {{input type="number" step="0.0001" min="0" class="form-control exchange-rate" value=transaction.exchangeRate}}
+              <span class="input-group-btn">
+                <button
+                    type="button"
+                    class="btn btn-default refresh-exchange-rate"
+                    {{action "refreshExchangeRate"}}
+                    disabled={{transaction.isFetchingRate}}>
+                  {{t "transactionForm.refreshRate"}}
+                </button>
+              </span>
+            </div>
+            {{#if transaction.rateFetchFailed}}
+              <p class="help-block text-danger rate-fetch-error">{{t "transactionForm.rateFetchError"}}</p>
+            {{/if}}
+          {{/if}}
+        </div>
+      {{/if}}
+
       {{#unless transaction.usesContributionEntries}}
         <div class="form-group {{if transaction.formErrors.amount.message "has-error"}}">
           <label class="control-label">{{t "common.howMuch"}}</label>
@@ -52,7 +86,7 @@
             {{#each transaction.amountEntries as |entry|}}
               <li>
                 <div class="input-group">
-                  <span class="input-group-addon">{{transaction.event.currency.code}}</span>
+                  <span class="input-group-addon">{{transaction.transactionCurrency.code}}</span>
                   {{input
                     value=entry.value
                     type="number"
@@ -80,7 +114,12 @@
           </button>
           {{#if transaction.hasMultipleAmounts}}
             <p class="help-block transaction-amount-total">
-              {{t "common.total"}} {{format-money-locale transaction.amount symbol=transaction.event.currency.code format="%v %s"}}
+              {{t "common.total"}} {{format-money-locale transaction.amount symbol=transaction.transactionCurrency.code format="%v %s"}}
+            </p>
+          {{/if}}
+          {{#if transaction.isForeignCurrency}}
+            <p class="help-block transaction-amount-converted">
+              &asymp; {{format-money-locale transaction.convertedAmount symbol=transaction.event.currency.code format="%v %s"}}
             </p>
           {{/if}}
           <div class="help-block with-errors">
@@ -105,15 +144,20 @@
               <li>
                 <div class="input-group">
                   <span class="input-group-addon">{{entry.user.name}}</span>
-                  <span class="input-group-addon">{{transaction.event.currency.code}}</span>
+                  <span class="input-group-addon">{{transaction.transactionCurrency.code}}</span>
                   {{input type="number" step="0.01" min="0" class="contribution-amount" value=entry.amount}}
                 </div>
               </li>
             {{/each}}
           </ul>
           <p class="help-block transaction-contributions-total">
-            {{t "common.total"}} {{format-money-locale transaction.totalContributions symbol=transaction.event.currency.code format="%v %s"}}
+            {{t "common.total"}} {{format-money-locale transaction.totalContributions symbol=transaction.transactionCurrency.code format="%v %s"}}
           </p>
+          {{#if transaction.isForeignCurrency}}
+            <p class="help-block transaction-contributions-converted">
+              &asymp; {{format-money-locale transaction.convertedTotalContributions symbol=transaction.event.currency.code format="%v %s"}}
+            </p>
+          {{/if}}
         </div>
       {{else}}
         <div class="form-group {{if transaction.formErrors.participants.message "has-error"}}">

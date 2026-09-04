@@ -105,6 +105,7 @@ test("it shows an amount per person instead of a split for deposits", function (
         isDeposit: true,
         usesContributionEntries: true,
         totalContributions: 250,
+        transactionCurrency: { code: "USD" },
         contributionEntries: [
             EmberObject.create({ user: bob, amount: 150 }),
             EmberObject.create({ user: alice, amount: 100 }),
@@ -170,6 +171,7 @@ test("it keeps the payer but swaps the split for exact amounts on an itemized ex
         usesContributionEntries: true,
         contributionsLabel: "How much does each person owe?",
         totalContributions: 45,
+        transactionCurrency: { code: "USD" },
         contributionEntries: [
             EmberObject.create({ user: alice, amount: 15 }),
             EmberObject.create({ user: bob, amount: 30 }),
@@ -217,6 +219,7 @@ test("it lets several amounts be entered for one transaction, summed into a tota
         name: "Groceries (several trips)",
         hasMultipleAmounts: true,
         amount: 75,
+        transactionCurrency: { code: "USD" },
         amountEntries: [
             EmberObject.create({ value: 20 }),
             EmberObject.create({ value: 30 }),
@@ -235,6 +238,126 @@ test("it lets several amounts be entered for one transaction, summed into a tota
     assert.equal(this.$(".transaction-amount").eq(1).val(), "30");
     assert.equal(this.$(".remove-amount").length, 3);
     assert.equal(this.$(".transaction-amount-total").text().trim(), "Total: 75.00 USD");
+});
+
+test("it doesn't show a currency selector when no currencies list is provided", function (assert) {
+    assert.expect(1);
+
+    const transaction = EmberObject.create({
+        name: "Coffee",
+        amountEntries: [EmberObject.create({ value: 5 })],
+    });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants}}`);
+
+    assert.equal(this.$(".transaction-currency").length, 0);
+});
+
+test("it shows a currency selector, with no exchange rate field, when using the event's own currency", function (assert) {
+    assert.expect(3);
+
+    const transaction = EmberObject.create({
+        name: "Coffee",
+        amountEntries: [EmberObject.create({ value: 5 })],
+        transactionCurrency: { code: "USD", nameWithCode: "United States dollar (USD)" },
+        isForeignCurrency: false,
+        event: {
+            currency: { code: "USD" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.set("currencies", [{ code: "USD", nameWithCode: "United States dollar (USD)" }]);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants currencies=currencies}}`);
+
+    assert.equal(this.$(".transaction-currency").length, 1);
+    assert.equal(this.$(".transaction-exchange-rate").length, 0);
+    assert.equal(this.$(".transaction-amount").closest("li").find(".input-group-addon").text().trim(), "USD");
+});
+
+test("it shows an editable exchange rate field when a foreign currency is selected", function (assert) {
+    assert.expect(5);
+
+    const transaction = EmberObject.create({
+        name: "Souvenir",
+        amount: 20,
+        amountEntries: [EmberObject.create({ value: 20 })],
+        transactionCurrency: { code: "USD", nameWithCode: "United States dollar (USD)" },
+        isForeignCurrency: true,
+        exchangeRate: 0.86,
+        convertedAmount: 17.2,
+        event: {
+            currency: { code: "EUR" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.set("currencies", [
+        { code: "EUR", nameWithCode: "Euro (EUR)" },
+        { code: "USD", nameWithCode: "United States dollar (USD)" },
+    ]);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants currencies=currencies}}`);
+
+    assert.equal(this.$(".transaction-exchange-rate").length, 1);
+    assert.equal(this.$(".exchange-rate").val(), "0.86");
+    assert.equal(this.$(".transaction-amount").closest("li").find(".input-group-addon").text().trim(), "USD");
+    assert.ok(this.$(".transaction-amount-converted").text().trim().indexOf("17.20") > -1);
+    assert.equal(this.$(".rate-fetch-error").length, 0);
+});
+
+test("it shows an error message when the exchange rate couldn't be fetched", function (assert) {
+    assert.expect(1);
+
+    const transaction = EmberObject.create({
+        name: "Souvenir",
+        amount: 20,
+        amountEntries: [EmberObject.create({ value: 20 })],
+        transactionCurrency: { code: "USD", nameWithCode: "United States dollar (USD)" },
+        isForeignCurrency: true,
+        exchangeRate: 1,
+        rateFetchFailed: true,
+        event: {
+            currency: { code: "EUR" },
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.set("currencies", [
+        { code: "EUR", nameWithCode: "Euro (EUR)" },
+        { code: "USD", nameWithCode: "United States dollar (USD)" },
+    ]);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants currencies=currencies}}`);
+
+    assert.equal(this.$(".rate-fetch-error").length, 1);
+});
+
+test("clicking refresh delegates to the form object", function (assert) {
+    assert.expect(1);
+
+    const transaction = EmberObject.create({
+        name: "Souvenir",
+        amount: 20,
+        amountEntries: [EmberObject.create({ value: 20 })],
+        transactionCurrency: { code: "USD", nameWithCode: "United States dollar (USD)" },
+        isForeignCurrency: true,
+        exchangeRate: 0.86,
+        event: {
+            currency: { code: "EUR" },
+        },
+        refreshExchangeRate() {
+            assert.ok(true, "refreshExchangeRate was called on the form object");
+        },
+    });
+
+    this.set("transaction", transaction);
+    this.set("currencies", [
+        { code: "EUR", nameWithCode: "Euro (EUR)" },
+        { code: "USD", nameWithCode: "United States dollar (USD)" },
+    ]);
+    this.render(hbs`{{transaction-form transaction=transaction users=transaction.participants currencies=currencies}}`);
+
+    this.$(".refresh-exchange-rate").click();
 });
 
 test("it shows an editable factor per participant when obeying factors", function (assert) {

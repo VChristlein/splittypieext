@@ -30,5 +30,9 @@ export default BaseForm.extend({
         removeAmount(entry) {
             get(this, "formObject").removeAmount(entry);
         },
+
+        refreshExchangeRate() {
+            get(this, "formObject").refreshExchangeRate();
+        },
     },
 });

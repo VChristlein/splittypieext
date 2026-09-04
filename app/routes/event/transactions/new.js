@@ -44,6 +44,7 @@ export default Route.extend({
         setProperties(controller, {
             form,
             users,
+            currencies: this.store.findAll("currency"),
         });
     },
 

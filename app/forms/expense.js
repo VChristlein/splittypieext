@@ -13,6 +13,7 @@ import { validator, buildValidations } from "ember-cp-validations";
 
 import FormObject from "./form-object";
 import translate from "splittypie/utils/translate";
+import fetchExchangeRate from "splittypie/utils/fetch-exchange-rate";
 
 const TRANSACTION_TYPE_KEYS = [
     { value: "expense", labelKey: "transactionType.expense" },
@@ -57,9 +58,78 @@ export default FormObject.extend(Validations, {
     modelName: "transaction",
 
     locale: service(),
+    ajax: service(),
 
     event: oneWay("model.event"),
     isSaving: oneWay("event.isSaving"),
+
+    // the currency this transaction was actually paid in - falls back to
+    // the event's own currency until the user picks a different one. Note:
+    // an unset async belongsTo (an unloaded "currency") still resolves to a
+    // truthy PromiseObject wrapping null content, so a plain `||` fallback
+    // would never reach event.currency - checking "id" tells them apart
+    transactionCurrency: computed("_currency", "event.currency", {
+        get() {
+            const currency = get(this, "_currency");
+
+            return get(currency, "id") ? currency : get(this, "event.currency");
+        },
+        set(key, currency) {
+            set(this, "_currency", currency);
+            this._fetchExchangeRate(currency);
+
+            return currency;
+        },
+    }),
+
+    isForeignCurrency: computed("transactionCurrency", "event.currency", function () {
+        const currency = get(this, "transactionCurrency");
+        const eventCurrency = get(this, "event.currency");
+
+        // compare by id, not object identity - an async belongsTo (like
+        // both of these) returns a brand new PromiseObject wrapper on every
+        // get(), even for the same underlying record
+        return !!currency && get(currency, "id") !== get(eventCurrency, "id");
+    }),
+
+    // amount/totalContributions above are always in transactionCurrency (what
+    // was actually typed in) - these are the same totals converted into the
+    // event's currency, for a live preview while the rate is being edited
+    convertedAmount: computed("amount", "exchangeRate", function () {
+        return get(this, "amount") * (parseFloat(get(this, "exchangeRate")) || 1);
+    }),
+
+    convertedTotalContributions: computed("totalContributions", "exchangeRate", function () {
+        return get(this, "totalContributions") * (parseFloat(get(this, "exchangeRate")) || 1);
+    }),
+
+    refreshExchangeRate() {
+        this._fetchExchangeRate(get(this, "transactionCurrency"));
+    },
+
+    _fetchExchangeRate(currency) {
+        const eventCurrency = get(this, "event.currency");
+
+        if (!currency || !eventCurrency || get(currency, "id") === get(eventCurrency, "id")) {
+            set(this, "exchangeRate", 1);
+            set(this, "rateFetchFailed", false);
+
+            return;
+        }
+
+        set(this, "isFetchingRate", true);
+        set(this, "rateFetchFailed", false);
+
+        fetchExchangeRate(get(this, "ajax"), get(currency, "code"), get(eventCurrency, "code"))
+            .then((rate) => {
+                set(this, "exchangeRate", rate);
+                set(this, "isFetchingRate", false);
+            })
+            .catch(() => {
+                set(this, "rateFetchFailed", true);
+                set(this, "isFetchingRate", false);
+            });
+    },
 
     isDeposit: equal("type", "deposit"),
     isItemized: equal("type", "itemized"),
@@ -123,9 +193,25 @@ export default FormObject.extend(Validations, {
         );
         set(this, "participants", getWithDefault(model, "participants", []).toArray());
         set(this, "_factorOverrides", Object.assign({}, getWithDefault(model, "participantFactors", {})));
-        set(this, "_contributions", Object.assign({}, getWithDefault(model, "contributions", {})));
 
-        const existingAmounts = getWithDefault(model, "amounts", []);
+        // read straight from the model here, bypassing the transactionCurrency
+        // setter, so loading an existing transaction doesn't trigger a rate
+        // fetch - only the user actively picking a new currency should
+        set(this, "_currency", get(model, "currency"));
+        set(this, "exchangeRate", getWithDefault(model, "exchangeRate", 1));
+
+        // once a foreign currency is set, the entry fields should show/edit
+        // what was actually typed in (originalAmounts/originalContributions),
+        // not the already-converted amounts/contributions used for balances
+        const originalContributions = getWithDefault(model, "originalContributions", {});
+        const contributions = Object.keys(originalContributions).length
+            ? originalContributions
+            : getWithDefault(model, "contributions", {});
+
+        set(this, "_contributions", Object.assign({}, contributions));
+
+        const originalAmounts = getWithDefault(model, "originalAmounts", []);
+        const existingAmounts = originalAmounts.length ? originalAmounts : getWithDefault(model, "amounts", []);
         const modelAmount = get(model, "amount");
         const seedAmounts = existingAmounts.length
             ? existingAmounts
@@ -232,17 +318,23 @@ export default FormObject.extend(Validations, {
 
     updateModelAttributes() {
         const model = get(this, "model");
+        const isForeignCurrency = get(this, "isForeignCurrency");
+        const rate = parseFloat(get(this, "exchangeRate")) || 1;
 
         setProperties(model, getProperties(this, "name", "date", "type"));
+        set(model, "currency", isForeignCurrency ? get(this, "transactionCurrency") : null);
+        set(model, "exchangeRate", isForeignCurrency ? rate : 1);
 
         if (get(this, "usesContributionEntries")) {
+            const originalContributions = {};
             const contributions = {};
 
             get(this, "contributionEntries").forEach((entry) => {
                 const amount = parseFloat(get(entry, "amount"));
 
                 if (amount > 0) {
-                    contributions[get(entry, "user.id")] = amount;
+                    originalContributions[get(entry, "user.id")] = amount;
+                    contributions[get(entry, "user.id")] = amount * rate;
                 }
             });
 
@@ -251,12 +343,14 @@ export default FormObject.extend(Validations, {
             // general pot; an itemized expense's payer is required, same as
             // a regular expense
             setProperties(model, {
-                amount: get(this, "amount"),
+                amount: get(this, "amount") * rate,
                 amounts: [],
+                originalAmounts: [],
                 payer: get(this, "payer"),
                 participants: [],
                 participantFactors: {},
                 contributions,
+                originalContributions: isForeignCurrency ? originalContributions : {},
             });
 
             return;
@@ -269,16 +363,20 @@ export default FormObject.extend(Validations, {
             participantFactors[get(participant, "id")] = overrides[get(participant, "id")];
         });
 
-        const amounts = get(this, "amountEntries")
+        const originalAmounts = get(this, "amountEntries")
             .map(entry => parseFloat(get(entry, "value")))
             .filter(value => value > 0);
+        const amounts = originalAmounts.map(value => value * rate);
 
         setProperties(
             model,
-            getProperties(this, "amount", "payer", "participants", "obeyFactors")
+            getProperties(this, "payer", "participants", "obeyFactors")
         );
+        set(model, "amount", get(this, "amount") * rate);
         set(model, "amounts", amounts);
+        set(model, "originalAmounts", isForeignCurrency ? originalAmounts : []);
         set(model, "participantFactors", participantFactors);
         set(model, "contributions", {});
+        set(model, "originalContributions", {});
     },
 });
