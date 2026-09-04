@@ -1,7 +1,6 @@
 # SplittyPie
 
-[![Build Status](https://github.com/cowbell/splittypie/workflows/Tests/badge.svg)](https://github.com/cowbell/splittypie/actions?query=workflow%3ATests)
-[![Code Climate](https://codeclimate.com/github/cowbell/splittypie/badges/gpa.svg)](https://codeclimate.com/github/cowbell/splittypie)
+[![Build Status](https://github.com/VChristlein/splittypieext/workflows/Tests/badge.svg)](https://github.com/VChristlein/splittypieext/actions?query=workflow%3ATests)
 
 SplittyPie is an offline-first Ember application. It's mobile friendly and
 follows [Progressive Web App concept.](https://developers.google.com/web/progressive-web-apps/)
@@ -43,7 +42,7 @@ You will need the following things properly installed on your computer.
 * [Git](http://git-scm.com/)
 * [Node.js](http://nodejs.org/) (with NPM)
 * [Ember CLI](http://www.ember-cli.com/)
-* [PhantomJS](http://phantomjs.org/)
+* [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/) (used headless to run tests)
 
 ## Installation
 
@@ -62,8 +61,10 @@ Make use of the many generators for code, try `ember help generate` for more det
 
 ### Running Tests
 
-* `ember test`
-* `ember test --server`
+* `npm test` &mdash; starts a local Firebase Realtime Database emulator (needed by the
+  acceptance/synchronization tests) before running the suite, and stops it afterwards
+* `ember test` / `ember test --server` &mdash; runs the suite directly, without the emulator; fine
+  for unit/integration tests, but acceptance tests that talk to the database will hang and fail
 
 ### Building
 
@@ -72,7 +73,22 @@ Make use of the many generators for code, try `ember help generate` for more det
 
 ### Deploying
 
-Specify what it takes to deploy your app.
+This fork deploys to [Firebase Hosting](https://firebase.google.com/docs/hosting), with Firebase
+Realtime Database as the backend, via `firebase-tools`.
+
+1. Create a Firebase project (Hosting + Realtime Database enabled) and update `.firebaserc` and
+   `firebase.json`'s `hosting.site` to match it.
+2. Log in once with `node_modules/.bin/firebase login`.
+3. Deploy with one of:
+   * `npm run deploy` &mdash; dev environment
+   * `npm run deploy:staging` &mdash; staging environment
+   * `npm run deploy:prod` &mdash; production environment
+   * `npm run deploy:offline` &mdash; offline-only environment
+
+Each of these builds the app and pushes it to the matching Firebase project in one step. If
+you're on a very recent Node.js version and see `firebase`/`firebase-server` crash on startup,
+see `node-legacy-shim.js` at the repo root &mdash; it's already wired into these scripts (and into
+`npm test`) via `NODE_OPTIONS`, so this only matters if you're calling the Firebase CLI directly.
 
 ## Further Reading / Useful Links
 
