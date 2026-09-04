@@ -10,6 +10,7 @@ import EmberObject, {
   get
 } from "@ember/object";
 import { validator, buildValidations } from "ember-cp-validations";
+import { resolve } from "rsvp";
 
 import FormObject from "./form-object";
 import translate from "splittypie/utils/translate";
@@ -107,9 +108,12 @@ export default FormObject.extend(Validations, {
     }),
 
     refreshExchangeRate() {
-        this._fetchExchangeRate(get(this, "transactionCurrency"));
+        return this._fetchExchangeRate(get(this, "transactionCurrency"));
     },
 
+    // returns the underlying fetch's promise (resolved immediately when no
+    // fetch is needed) purely so tests can wait on it - nothing in the app
+    // itself uses the return value
     _fetchExchangeRate(currency) {
         const eventCurrency = get(this, "event.currency");
 
@@ -117,13 +121,13 @@ export default FormObject.extend(Validations, {
             set(this, "exchangeRate", 1);
             set(this, "rateFetchFailed", false);
 
-            return;
+            return resolve();
         }
 
         set(this, "isFetchingRate", true);
         set(this, "rateFetchFailed", false);
 
-        fetchExchangeRate(get(this, "ajax"), get(currency, "code"), get(eventCurrency, "code"))
+        return fetchExchangeRate(get(this, "ajax"), get(currency, "code"), get(eventCurrency, "code"))
             .then((rate) => {
                 set(this, "exchangeRate", rate);
                 set(this, "isFetchingRate", false);

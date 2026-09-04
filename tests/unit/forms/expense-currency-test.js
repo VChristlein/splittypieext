@@ -1,5 +1,7 @@
 import { run } from "@ember/runloop";
-import { get, set } from "@ember/object";
+import EmberObject, { get, set } from "@ember/object";
+import Service from "@ember/service";
+import { resolve, reject, Promise as RSVPPromise } from "rsvp";
 import { moduleFor, test } from "ember-qunit";
 import ExpenseForm from "splittypie/forms/expense";
 
@@ -170,4 +172,219 @@ test("editing an existing foreign-currency transaction shows the original amount
         assert.equal(get(form, "transactionCurrency.id"), "USD");
         assert.ok(get(form, "isForeignCurrency"));
     });
+});
+
+// regression test: a brand new transaction (as created by
+// event/transactions/new.js's route model) is a plain EmberObject, not an
+// ember-data record - its "currency" is genuinely undefined, not a
+// PromiseObject wrapping null like a real record's unset async belongsTo
+// would be. transactionCurrency's getter used to call get() on that
+// undefined value, which throws and silently aborted the rest of the
+// transaction-form's render (see the "everyone selected by default"
+// acceptance test failure this was caught by)
+test("a brand new transaction's plain object model doesn't crash currency handling", function (assert) {
+    const store = this.container.lookup("service:store");
+    const formFactory = this.subject();
+    let form;
+
+    run(() => {
+        const { event, bob, alice } = createEventWithUsers(store);
+
+        const model = EmberObject.create({
+            event,
+            payer: bob,
+            participants: [bob, alice],
+            type: "expense",
+        });
+
+        form = formFactory.createForm("expense", model);
+    });
+
+    assert.equal(get(form, "transactionCurrency.id"), "EUR", "falls back to the event's currency");
+    assert.notOk(get(form, "isForeignCurrency"));
+    assert.equal(get(form, "exchangeRate"), 1);
+});
+
+test("switching back to the event's own currency resets the exchange rate", function (assert) {
+    const store = this.container.lookup("service:store");
+    const formFactory = this.subject();
+    let form;
+    let eventCurrency;
+
+    run(() => {
+        const { usd, eur, event, bob, alice } = createEventWithUsers(store);
+        eventCurrency = eur;
+
+        const transaction = store.createRecord("transaction", {
+            event,
+            payer: bob,
+            participants: [bob, alice],
+            type: "expense",
+            currency: usd,
+            exchangeRate: 0.5,
+        });
+
+        form = formFactory.createForm("expense", transaction);
+        set(form, "rateFetchFailed", true);
+    });
+
+    run(() => {
+        set(form, "transactionCurrency", eventCurrency);
+    });
+
+    assert.notOk(get(form, "isForeignCurrency"));
+    assert.equal(get(form, "exchangeRate"), 1);
+    assert.notOk(get(form, "rateFetchFailed"));
+});
+
+test("picking a foreign currency starts fetching its exchange rate immediately", function (assert) {
+    // a stub that never resolves during the test - we only care that
+    // isFetchingRate flips synchronously as soon as the currency is set
+    this.register("service:ajax", Service.extend({
+        request() {
+            return new RSVPPromise(() => {});
+        },
+    }));
+
+    const store = this.container.lookup("service:store");
+    const formFactory = this.subject();
+    let form;
+    let usd;
+
+    run(() => {
+        const created = createEventWithUsers(store);
+        usd = created.usd;
+
+        const transaction = store.createRecord("transaction", {
+            event: created.event,
+            payer: created.bob,
+            participants: [created.bob, created.alice],
+            type: "expense",
+        });
+
+        form = formFactory.createForm("expense", transaction);
+    });
+
+    assert.notOk(get(form, "isFetchingRate"), "not fetching before a foreign currency is picked");
+
+    run(() => {
+        set(form, "transactionCurrency", usd);
+    });
+
+    assert.ok(get(form, "isFetchingRate"), "starts fetching as soon as the currency is picked");
+});
+
+test("refreshExchangeRate resolves with the fetched rate and updates state", function (assert) {
+    assert.expect(4);
+    const done = assert.async();
+
+    this.register("service:ajax", Service.extend({
+        request(url) {
+            assert.equal(url, "https://api.frankfurter.dev/v1/latest?from=USD&to=EUR");
+
+            return resolve({ rates: { EUR: 0.86 } });
+        },
+    }));
+
+    const store = this.container.lookup("service:store");
+    const formFactory = this.subject();
+    let form;
+
+    run(() => {
+        const { usd, event, bob, alice } = createEventWithUsers(store);
+
+        const transaction = store.createRecord("transaction", {
+            event,
+            payer: bob,
+            participants: [bob, alice],
+            type: "expense",
+        });
+
+        form = formFactory.createForm("expense", transaction);
+        // seed the currency directly, bypassing the setter's own fetch, so
+        // this test triggers exactly one fetch via refreshExchangeRate()
+        set(form, "_currency", usd);
+    });
+
+    assert.ok(get(form, "isForeignCurrency"));
+
+    form.refreshExchangeRate().then(() => {
+        run(() => {
+            assert.equal(get(form, "exchangeRate"), 0.86);
+            assert.notOk(get(form, "isFetchingRate"));
+            done();
+        });
+    });
+});
+
+test("a failed exchange rate fetch is reported without crashing", function (assert) {
+    const done = assert.async();
+
+    this.register("service:ajax", Service.extend({
+        request() {
+            return reject(new Error("network error"));
+        },
+    }));
+
+    const store = this.container.lookup("service:store");
+    const formFactory = this.subject();
+    let form;
+
+    run(() => {
+        const { usd, event, bob, alice } = createEventWithUsers(store);
+
+        const transaction = store.createRecord("transaction", {
+            event,
+            payer: bob,
+            participants: [bob, alice],
+            type: "expense",
+        });
+
+        form = formFactory.createForm("expense", transaction);
+        set(form, "_currency", usd);
+    });
+
+    form.refreshExchangeRate().then(() => {
+        run(() => {
+            assert.ok(get(form, "rateFetchFailed"));
+            assert.notOk(get(form, "isFetchingRate"));
+            done();
+        });
+    });
+});
+
+test("saving an itemized expense in a foreign currency converts each person's exact share", function (assert) {
+    const store = this.container.lookup("service:store");
+    const formFactory = this.subject();
+    let transaction;
+    let alice;
+    let bob;
+
+    run(() => {
+        const created = createEventWithUsers(store);
+        alice = created.alice;
+        bob = created.bob;
+
+        transaction = store.createRecord("transaction", {
+            event: created.event,
+            payer: alice,
+            type: "itemized",
+        });
+
+        const form = formFactory.createForm("expense", transaction);
+
+        set(form, "name", "Groceries");
+        set(form, "date", "2024-01-01");
+        get(form, "contributionEntries").findBy("user", bob).set("amount", 30);
+
+        set(form, "_currency", created.usd);
+        set(form, "exchangeRate", 0.5);
+
+        form.updateModelAttributes();
+    });
+
+    assert.equal(get(transaction, "payer.id"), "alice", "the payer is preserved for an itemized expense");
+    assert.equal(get(transaction, "contributions")[get(bob, "id")], 15, "bob's share is converted (30 USD * 0.5)");
+    assert.equal(get(transaction, "originalContributions")[get(bob, "id")], 30);
+    assert.equal(get(transaction, "amount"), 15);
 });
