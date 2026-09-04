@@ -1,6 +1,6 @@
 import { alias } from "@ember/object/computed";
-import { run, scheduleOnce } from "@ember/runloop";
-import { reject, resolve, allSettled } from "rsvp";
+import { run, scheduleOnce, later } from "@ember/runloop";
+import RSVP, { reject, resolve, allSettled } from "rsvp";
 import EmberObject, {
   getProperties,
   set,
@@ -14,6 +14,18 @@ import Ember from "ember";
 const {
     Logger: { debug }
 } = Ember;
+
+// see app/repositories/event.js - the online adapter's lookup can hang
+// forever instead of ever settling, so it's always raced against this
+const ONLINE_LOOKUP_TIMEOUT_MS = 8000;
+
+function withTimeout(promise) {
+    const timeout = new RSVP.Promise((resolvePromise, rejectPromise) => {
+        later(() => rejectPromise(new Error("online lookup timed out")), ONLINE_LOOKUP_TIMEOUT_MS);
+    });
+
+    return RSVP.race([promise, timeout]);
+}
 
 export default Service.extend(Evented, {
     // Events
@@ -105,18 +117,32 @@ export default Service.extend(Evented, {
 
         this._unloadOnlineEvent(id);
 
-        return get(this, "onlineStore")
-            .findRecord("event", id)
-            .catch(this._onlineEventNotFound.bind(this, offlineEvent));
+        // the online adapter can throw synchronously (e.g. a
+        // misconfigured/unreachable Firebase database), or never settle at
+        // all (a hung connection attempt) - since this runs inside a .map()
+        // during the app's own boot-time sync, either would otherwise abort
+        // or stall that whole batch instead of just this one event
+        try {
+            return withTimeout(get(this, "onlineStore").findRecord("event", id))
+                .catch(this._onlineEventNotFound.bind(this, offlineEvent));
+        } catch (error) {
+            return this._onlineEventNotFound(offlineEvent, error);
+        }
     },
 
     _replaceOfflineEvent(offlineEvent) {
-        return get(this, "onlineStore")
-            .findRecord("event", get(offlineEvent, "id"))
-            .then((onlineEvent) => {
-                this.pushEventOffline(onlineEvent);
-                this._listenForChanges(onlineEvent);
-            });
+        // see _fetchOnlineEvent - the online adapter can throw synchronously
+        // or never settle
+        try {
+            return withTimeout(get(this, "onlineStore").findRecord("event", get(offlineEvent, "id")))
+                .then((onlineEvent) => {
+                    this.pushEventOffline(onlineEvent);
+                    this._listenForChanges(onlineEvent);
+                })
+                .catch(() => {});
+        } catch (error) {
+            return resolve();
+        }
     },
 
     _syncOneEvent(offlineEvent) {
