@@ -458,3 +458,60 @@ test("a directed deposit followed by the full expense correctly nets out who owe
 
     assert.equal(total.toFixed(2), (0).toFixed(2));
 });
+
+// regression test for https://github.com/tsubik/splittypie/issues/20 -
+// editing an existing transaction (instead of deleting/recreating it) used
+// to leave every user's balance stale until a full page reload, because
+// balance only depended on "event.transactions.[]" (add/remove), not on any
+// individual transaction's own fields changing
+test("balance recalculates after editing an existing transaction in place", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+    let john;
+    let transaction;
+
+    run(() => {
+        const event = store.createRecord("event", { name: "Test event" });
+        alice = this.subject({ id: "alice" });
+        bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+        john = store.createRecord("user", { id: "john", name: "John", event });
+
+        transaction = store.createRecord("transaction", {
+            name: "Dinner",
+            amount: 33,
+            payer: bob,
+            participants: [bob, alice, john],
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObject(transaction);
+    });
+
+    assert.equal(alice.get("balance"), (-11).toFixed(2), "initial: alice owes 11");
+    assert.equal(john.get("balance"), (-11).toFixed(2), "initial: john owes 11");
+
+    // remove Alice as a participant, in place, same as editing the
+    // transaction's form and unchecking her
+    run(() => {
+        transaction.set("participants", [bob, john]);
+    });
+
+    assert.equal(alice.get("balance"), (0).toFixed(2), "after removing alice, she owes 0");
+    assert.equal(john.get("balance"), (-16.5).toFixed(2), "after removing alice, john's share doubles");
+
+    // change the amount, in place, same as editing the transaction's form
+    run(() => {
+        transaction.set("amount", 30);
+    });
+
+    assert.equal(john.get("balance"), (-15).toFixed(2), "after changing the amount, john's share updates");
+
+    // add Alice back as a participant, in place
+    run(() => {
+        transaction.set("participants", [bob, alice, john]);
+    });
+
+    assert.equal(alice.get("balance"), (-10).toFixed(2), "after re-adding alice, she owes her share again");
+    assert.equal(john.get("balance"), (-10).toFixed(2), "after re-adding alice, john's share shrinks back");
+});
