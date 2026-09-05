@@ -116,6 +116,38 @@ test("it splits cost evenly when a transaction opts out of factors", function (a
     assert.equal(child.get("balance"), (-(90 / 3)).toFixed(2));
 });
 
+// regression test: $10 split 3 ways is 3.333...33 each, a value that can't
+// be represented exactly in cents. Rounding each person's balance to the
+// nearest cent independently (6.67 + -3.33 + -3.33) used to sum to 0.01
+// instead of 0 - a stray cent that showed up nowhere and belonged to no one.
+test("balances always sum to exactly zero, even when a split doesn't divide evenly into cents", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+    let carol;
+
+    run(() => {
+        const event = store.createRecord("event", { name: "Test event" });
+        alice = this.subject({ id: "alice" });
+        bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+        carol = store.createRecord("user", { id: "carol", name: "Carol", event });
+
+        const transaction = store.createRecord("transaction", {
+            name: "Dinner",
+            amount: 10,
+            payer: alice,
+            participants: [alice, bob, carol],
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObject(transaction);
+    });
+
+    const total = alice.get("balance") + bob.get("balance") + carol.get("balance");
+
+    assert.ok(Math.abs(total) < 0.000001, `balances should sum to zero, got ${total}`);
+});
+
 test("it lets a transaction override a participant's factor just for itself", function (assert) {
     const store = this.store();
     let bob;

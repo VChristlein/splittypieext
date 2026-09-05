@@ -113,9 +113,12 @@ export default Model.extend(ModelMixin, {
                 return acc + (myShare > 0 ? myShare : 0);
             }, 0);
 
-            return (
-                paidMoney - owedMoney - itemizedOwed + depositCredit - directedDepositDebit
-            ).toFixed(2);
+            // deliberately NOT rounded here - rounding each person's balance
+            // independently (e.g. a $10 expense split 3 ways: 6.67 + -3.33 +
+            // -3.33 = 0.01, not 0) used to leave the group's balances not
+            // summing to exactly zero. Round only where a balance is
+            // actually displayed or turned into a real payment.
+            return paidMoney - owedMoney - itemizedOwed + depositCredit - directedDepositDebit;
         }
     ),
 });
