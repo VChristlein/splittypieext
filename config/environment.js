@@ -10,8 +10,8 @@ module.exports = function (environment) {
         contentSecurityPolicy: {
             "default-src": "'self'",
             "frame-src": "'self' https://*.firebaseio.com",
-            "connect-src": "'self' https://*.rollbar.com http://ip-api.com https://auth.firebase.com wss://*.firebaseio.com ws://*.firebaseio.test:5005 https://fonts.gstatic.com https://fonts.googleapis.com",
-            "script-src": "'self' 'unsafe-inline' https://*.rollbar.com https://*.firebaseio.com https://www.google-analytics.com",
+            "connect-src": "'self' https://*.rollbar.com http://ip-api.com https://auth.firebase.com wss://*.firebaseio.com https://*.firebaseio.com wss://*.firebasedatabase.app https://*.firebasedatabase.app ws://*.firebaseio.test:5005 https://fonts.gstatic.com https://fonts.googleapis.com",
+            "script-src": "'self' 'unsafe-inline' https://*.rollbar.com https://*.firebaseio.com https://*.firebasedatabase.app https://www.google-analytics.com",
             "style-src": "'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src": "'self' data: https://fonts.gstatic.com",
             "img-src": "'self' data: https://www.google-analytics.com",

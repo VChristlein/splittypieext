@@ -8,6 +8,7 @@
     "test": "tests"
   },
   "scripts": {
+    "postinstall": "node ./fix-emberfire-vendor-entry.js",
     "build": "ember build",
     "start": "ember server",
     "pretest": "NODE_OPTIONS=\"--require ./node-legacy-shim.js\" node ./node_modules/.bin/firebase-server -p 5005 &",
@@ -93,6 +94,7 @@
     ]
   },
   "dependencies": {
-    "exceljs": "^4.4.0"
+    "exceljs": "^4.4.0",
+    "firebase": "8.10.1"
   }
 }
