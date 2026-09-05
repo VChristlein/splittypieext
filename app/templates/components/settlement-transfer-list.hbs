@@ -5,9 +5,11 @@
     <div class="panel-body">
       {{#each transfers as |transfer|}}
         <li class="settlement-item">
-          <strong>{{transfer.sender.name}}</strong> {{t "settleUp.owes"}} <strong>{{transfer.recipient.name}}</strong>
-          <span class="text-nowrap">
-            {{format-money-locale transfer.amount symbol=transfer.currency.code format="%v %s"}}
+          <span class="settlement-statement">
+            <strong>{{transfer.sender.name}}</strong> {{t "settleUp.owes"}} <strong>{{transfer.recipient.name}}</strong>
+            <span class="text-nowrap">
+              {{format-money-locale transfer.amount symbol=transfer.currency.code format="%v %s"}}
+            </span>
           </span>
           <button class="btn btn-sm btn-success" {{action (action settleUp transfer)}}>
             {{t "settleUp.settleButton"}}

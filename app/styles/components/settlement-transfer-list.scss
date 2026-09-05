@@ -1,8 +1,18 @@
 .settlement-item {
   font-size: 14px;
   margin: 10px 0px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .settlement-statement {
+    flex: 1 1 auto;
+  }
 
   .btn {
-    float: right;
+    flex-shrink: 0;
+    margin-left: auto;
   }
 }
