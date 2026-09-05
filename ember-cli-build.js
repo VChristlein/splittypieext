@@ -70,6 +70,7 @@ module.exports = function (defaults) {
     app.import("node_modules/mprogress/build/css/mprogress.css");
     app.import("node_modules/mprogress/build/js/mprogress.js");
     app.import("node_modules/exceljs/dist/exceljs.min.js");
+    app.import("node_modules/qrcode-generator/dist/qrcode.js");
 
     return app.toTree();
 };

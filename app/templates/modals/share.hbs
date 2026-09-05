@@ -9,5 +9,8 @@
     </p>
 
     {{event-url value=model.event.url}}
+
+    <p class="share-qr-label">{{t "share.qrLabel"}}</p>
+    {{event-qr-code value=model.event.url}}
   </div>
 {{/modal-dialog}}

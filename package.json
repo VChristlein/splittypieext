@@ -95,6 +95,7 @@
   },
   "dependencies": {
     "exceljs": "^4.4.0",
-    "firebase": "8.10.1"
+    "firebase": "8.10.1",
+    "qrcode-generator": "2.0.4"
   }
 }

@@ -178,6 +178,7 @@ export default {
 
     "share.title": "Dieses Event mit Freunden teilen",
     "share.body": "Gib nun den folgenden Link an deinen Freund weiter.",
+    "share.qrLabel": "Oder lass ihn diesen Code scannen:",
 
     "errors.notFoundTitle": "Diese Seite existiert leider nicht!",
     "errors.notFoundBodyPre": "Überprüfe, ob deine URL korrekt ist. Du kannst auch zur",
