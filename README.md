@@ -32,6 +32,10 @@ original SplittyPie with:
   value.
 * **English/German language switcher** &mdash; a language toggle in the side menu; German also
   formats numbers the German way (`1.234,56` instead of `1,234.56`).
+* **Working cross-device sync** &mdash; the original project's bundled Firebase SDK (2016-era)
+  couldn't talk to modern Firebase databases at all, so an event created on one device silently
+  never reached anyone else. Upgraded to a current SDK; opening a shared event link on a different
+  device or browser now actually works.
 
 See the rest of this README for the original project's setup and usage instructions.
 
@@ -48,7 +52,9 @@ You will need the following things properly installed on your computer.
 
 * `git clone <repository-url>` this repository
 * change into the new directory
-* `npm install`
+* `npm install` &mdash; a `postinstall` step also patches a small build-config incompatibility
+  between `emberfire` and the current Firebase SDK version (see `fix-emberfire-vendor-entry.js`);
+  it's idempotent and safe to ignore unless it prints a warning
 
 ## Running / Development
 
