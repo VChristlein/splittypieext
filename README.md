@@ -36,6 +36,8 @@ original SplittyPie with:
   couldn't talk to modern Firebase databases at all, so an event created on one device silently
   never reached anyone else. Upgraded to a current SDK; opening a shared event link on a different
   device or browser now actually works.
+* **QR code sharing** &mdash; the share dialog now also shows a QR code for the event's link, handy
+  for splitting a bill in person without typing or sending anything.
 
 See the rest of this README for the original project's setup and usage instructions.
 
