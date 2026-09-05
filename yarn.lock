@@ -5781,9 +5781,9 @@ ember-cp-validations@3.x:
     exists-sync "0.0.4"
     walk-sync "^0.3.1"
 
-"ember-data-fixture-adapter@git://github.com/emberjs/ember-data-fixture-adapter#2-0":
+"ember-data-fixture-adapter@https://github.com/emberjs/ember-data-fixture-adapter.git#2-0":
   version "2.0.0"
-  resolved "git://github.com/emberjs/ember-data-fixture-adapter#ce93a14bfc4e4db1df67180b4646d0875dd79411"
+  resolved "https://github.com/emberjs/ember-data-fixture-adapter.git#ce93a14bfc4e4db1df67180b4646d0875dd79411"
   dependencies:
     ember-cli-babel "^5.1.5"
 
@@ -6040,9 +6040,9 @@ ember-runtime-enumerable-includes-polyfill@^2.0.0:
     ember-cli-babel "^6.9.0"
     ember-cli-version-checker "^2.1.0"
 
-"ember-side-menu@git://github.com/tsubik/ember-side-menu#master":
+"ember-side-menu@https://github.com/tsubik/ember-side-menu.git#f72fe629be2535c43398e21cf8c09a03d6175f70":
   version "0.0.13"
-  resolved "git://github.com/tsubik/ember-side-menu#f72fe629be2535c43398e21cf8c09a03d6175f70"
+  resolved "https://github.com/tsubik/ember-side-menu.git#f72fe629be2535c43398e21cf8c09a03d6175f70"
   dependencies:
     ember-cli-babel "^5.1.7"
 
