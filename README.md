@@ -38,6 +38,8 @@ original SplittyPie with:
   device or browser now actually works.
 * **QR code sharing** &mdash; the share dialog now also shows a QR code for the event's link, handy
   for splitting a bill in person without typing or sending anything.
+* **Transaction search** &mdash; a search box above an event's transaction list to filter by name,
+  handy once an event accumulates a lot of transactions.
 
 See the rest of this README for the original project's setup and usage instructions.
 
