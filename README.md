@@ -44,7 +44,9 @@ See the rest of this README for the original project's setup and usage instructi
 You will need the following things properly installed on your computer.
 
 * [Git](http://git-scm.com/)
-* [Node.js](http://nodejs.org/) (with NPM)
+* [Node.js](http://nodejs.org/) (with NPM) &mdash; CI runs on Node 20; very recent versions (22+) also
+  work but need `node-legacy-shim.js` and `JOBS=1`, both already wired into the npm scripts (see
+  Deploying below)
 * [Ember CLI](http://www.ember-cli.com/)
 * [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/) (used headless to run tests)
 

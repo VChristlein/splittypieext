@@ -23,7 +23,7 @@
   },
   "repository": "",
   "engines": {
-    "node": ">= 0.10.0"
+    "node": ">=10.10.0"
   },
   "author": "Tomasz Subik",
   "license": "MIT",
