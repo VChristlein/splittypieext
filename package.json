@@ -9,10 +9,10 @@
   },
   "scripts": {
     "postinstall": "node ./fix-emberfire-vendor-entry.js",
-    "build": "ember build",
+    "build": "JOBS=1 ember build",
     "start": "ember server",
     "pretest": "NODE_OPTIONS=\"--require ./node-legacy-shim.js\" node ./node_modules/.bin/firebase-server -p 5005 &",
-    "test": "ember test",
+    "test": "JOBS=1 ember test",
     "posttest": "pkill -f 'node ./node_modules/.bin/firebase-server' &",
     "deploy": "rm -rf dist/ && JOBS=1 ember build && NODE_OPTIONS=\"--require ./node-legacy-shim.js\" firebase use dev && NODE_OPTIONS=\"--require ./node-legacy-shim.js\" firebase deploy",
     "deploy:prod": "rm -rf dist/ && JOBS=1 ember build --environment=production && NODE_OPTIONS=\"--require ./node-legacy-shim.js\" firebase use prod && NODE_OPTIONS=\"--require ./node-legacy-shim.js\" firebase deploy",
