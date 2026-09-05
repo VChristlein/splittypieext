@@ -1,0 +1,48 @@
+name: Database canary
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  canary:
+    name: Round-trip check against the real database
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Write, read back, and clean up a throwaway event
+        env:
+          # not a secret - this is the same public database URL the deployed
+          # app itself embeds in its JS bundle; no auth is needed for this
+          # path, matching what the app's own unauthenticated users can do
+          DB_URL: https://splittypieext-6e226-default-rtdb.europe-west1.firebasedatabase.app
+          CANARY_PATH: events/ci-db-canary-DO-NOT-USE
+        run: |
+          set -eu
+
+          cleanup() {
+            curl -sf -X DELETE "$DB_URL/$CANARY_PATH.json" > /dev/null
+          }
+          trap cleanup EXIT
+
+          # clean up any leftover from a previous failed run first
+          cleanup
+
+          marker="canary-$(date -u +%s)"
+          write_status=$(curl -s -o /dev/null -w '%{http_code}' -X PUT \
+            -d "{\"name\": \"$marker\", \"isOffline\": false}" \
+            "$DB_URL/$CANARY_PATH.json")
+
+          if [ "$write_status" != "200" ]; then
+            echo "::error::write failed with HTTP $write_status - the database is unreachable or its rules changed"
+            exit 1
+          fi
+
+          read_back=$(curl -sf "$DB_URL/$CANARY_PATH/name.json")
+
+          if [ "$read_back" != "\"$marker\"" ]; then
+            echo "::error::read back '$read_back', expected '\"$marker\"' - write succeeded but read is inconsistent"
+            exit 1
+          fi
+
+          echo "Database round-trip OK ($marker)"
