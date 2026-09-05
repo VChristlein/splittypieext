@@ -54,6 +54,8 @@ export default Route.extend({
         syncOnline(event) {
             get(this, "syncer").pushEventOnline(event).then(() => {
                 get(this, "notify").success(translate(get(this, "locale.current"), "event.syncedNotify"));
+            }).catch(() => {
+                get(this, "notify").error(translate(get(this, "locale.current"), "event.syncFailedNotify"));
             });
         },
     },

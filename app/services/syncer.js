@@ -77,7 +77,19 @@ export default Service.extend(Evented, {
     },
 
     pushEventOnline(offlineEvent) {
-        return this._pushToStore(get(this, "onlineStore"), offlineEvent).then((onlineEvent) => {
+        // see _fetchOnlineEvent - the online adapter can throw synchronously
+        // or never settle, and this is triggered directly by a user action
+        // (the "sync online" button), so it must reject cleanly instead of
+        // hanging or crashing
+        let pushOperation;
+
+        try {
+            pushOperation = withTimeout(this._pushToStore(get(this, "onlineStore"), offlineEvent));
+        } catch (error) {
+            pushOperation = reject(error);
+        }
+
+        return pushOperation.then((onlineEvent) => {
             set(offlineEvent, "isOffline", false);
             this._listenForChanges(onlineEvent);
             return offlineEvent.save();

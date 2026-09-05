@@ -72,3 +72,40 @@ sinonTest("syncOnline runs operations: reloadOnline, flushQueue, updateOffline",
         });
     });
 });
+
+sinonTest("pushEventOnline resolves and starts listening once the online push succeeds", function (assert) {
+    assert.expect(3);
+
+    const service = this.subject();
+    const onlineEvent = EmberObject.create({ id: "online-1" });
+    const offlineEvent = EmberObject.create({
+        isOffline: true,
+        save: this.stub().returns(resolve(offlineEvent)),
+    });
+
+    service._pushToStore = this.stub().returns(resolve(onlineEvent));
+    service._listenForChanges = this.stub();
+
+    run(() => {
+        service.pushEventOnline(offlineEvent).then(() => {
+            assert.notOk(offlineEvent.get("isOffline"));
+            assert.ok(service._listenForChanges.calledWith(onlineEvent));
+            assert.ok(offlineEvent.save.calledOnce);
+        });
+    });
+});
+
+sinonTest("pushEventOnline rejects instead of throwing when the online store throws synchronously", function (assert) {
+    assert.expect(1);
+
+    const service = this.subject();
+    const offlineEvent = EmberObject.create({ isOffline: true });
+
+    service._pushToStore = this.stub().throws(new Error("Cannot parse Firebase url"));
+
+    run(() => {
+        service.pushEventOnline(offlineEvent).catch((error) => {
+            assert.equal(error.message, "Cannot parse Firebase url");
+        });
+    });
+});

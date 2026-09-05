@@ -133,6 +133,7 @@ export default {
     "event.deletedNotify": "Event wurde gelöscht.",
     "event.changedNotify": "Event wurde geändert",
     "event.syncedNotify": "Event wurde erfolgreich synchronisiert",
+    "event.syncFailedNotify": "Event konnte nicht online synchronisiert werden. Bitte versuche es später erneut.",
     "event.viewingAsNotify": "Du betrachtest dieses Event jetzt als {{name}}",
     "event.transactionSavedNotify": "Transaktion wurde gespeichert.",
     "event.transactionDeletedNotify": "Transaktion wurde gelöscht.",

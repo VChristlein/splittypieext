@@ -133,6 +133,7 @@ export default {
     "event.deletedNotify": "Event has been deleted.",
     "event.changedNotify": "Event has been changed",
     "event.syncedNotify": "Event was successfully synced",
+    "event.syncFailedNotify": "Could not sync the event online. Please try again later.",
     "event.viewingAsNotify": "Now you are watching this event as {{name}}",
     "event.transactionSavedNotify": "Transaction has been saved.",
     "event.transactionDeletedNotify": "Transaction has been deleted.",
