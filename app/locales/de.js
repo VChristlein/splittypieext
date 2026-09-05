@@ -104,6 +104,8 @@ export default {
 
     "transactionList.otherDay": "An einem anderen Tag",
     "transactionList.empty": "Es gibt noch keine Transaktionen.",
+    "transactionList.searchPlaceholder": "Nach Name suchen...",
+    "transactionList.noSearchResults": "Keine Transaktionen gefunden.",
 
     "transactionListHeader.expenseSingular": "Ausgabe",
     "transactionListHeader.expensePlural": "Ausgaben",

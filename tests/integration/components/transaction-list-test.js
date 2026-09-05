@@ -34,3 +34,35 @@ test("it renders transaction list items", function (assert) {
 
     assert.equal(this.$(".transaction-list-item").length, 2, "renders 2 transactions");
 });
+
+test("it filters transactions by name as you type, case-insensitively", function (assert) {
+    const users = [{ name: "Bob" }];
+    const transactions = [
+        EmberObject.create({ payer: users[0], date: "", name: "Groceries", amount: "20", participants: users }),
+        EmberObject.create({ payer: users[0], date: "", name: "Movie tickets", amount: "30", participants: users }),
+    ];
+
+    this.set("transactions", transactions);
+    this.render(hbs`{{transaction-list transactions=transactions}}`);
+
+    this.$(".transaction-search").val("movie").trigger("input");
+
+    assert.equal(this.$(".transaction-list-item").length, 1);
+    assert.ok(this.$().text().indexOf("Movie tickets") > -1);
+    assert.ok(this.$().text().indexOf("Groceries") === -1);
+});
+
+test("it shows a distinct message when the search has no matches, instead of the empty-list message", function (assert) {
+    const users = [{ name: "Bob" }];
+    const transactions = [
+        EmberObject.create({ payer: users[0], date: "", name: "Groceries", amount: "20", participants: users }),
+    ];
+
+    this.set("transactions", transactions);
+    this.render(hbs`{{transaction-list transactions=transactions}}`);
+
+    this.$(".transaction-search").val("something else entirely").trigger("input");
+
+    assert.equal(this.$(".transaction-list-item").length, 0);
+    assert.equal(this.$().text().trim(), "No transactions match your search.");
+});
