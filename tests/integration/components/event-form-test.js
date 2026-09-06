@@ -61,3 +61,17 @@ test("it offers an export-to-excel option for an existing event", function (asse
 
     assert.equal(this.$(".export-excel").text().trim(), "Export to Excel");
 });
+
+// regression test - the delete and sync-online buttons had no explicit
+// type, so they defaulted to type="submit" and, being first in the form,
+// pressing Enter in any text field (e.g. while editing the event's name)
+// submitted the form via delete instead of save - deleting the whole event
+test("the delete and sync-online buttons can't be triggered by pressing Enter in a text field", function (assert) {
+    const event = EmberObject.create({ name: "Test event", isNew: false, isOffline: true, users: [] });
+
+    this.set("event", event);
+    this.render(hbs`{{event-form event=event}}`);
+
+    assert.equal(this.$(".delete-event").attr("type"), "button");
+    assert.equal(this.$(".sync-online").attr("type"), "button");
+});

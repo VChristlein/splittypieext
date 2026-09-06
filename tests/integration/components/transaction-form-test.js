@@ -50,6 +50,19 @@ test("it renders with transaction model", function (assert) {
     assert.equal(this.$(".transaction-obey-factors").is(":checked"), false);
 });
 
+// regression test - the delete button had no explicit type, so it defaulted
+// to type="submit" and, being first in the form, pressing Enter in any text
+// field (e.g. while editing the name) submitted the form via delete instead
+// of save
+test("the delete button can't be triggered by pressing Enter in a text field", function (assert) {
+    const transaction = EmberObject.create({ name: "Existing transaction" });
+
+    this.set("transaction", transaction);
+    this.render(hbs`{{transaction-form transaction=transaction}}`);
+
+    assert.equal(this.$(".delete-transaction").attr("type"), "button");
+});
+
 test("it offers expense, donation and deposit as transaction types", function (assert) {
     assert.expect(4);
 

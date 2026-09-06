@@ -45,12 +45,12 @@
         <div class="form-group">
           <label class="control-label">{{t "common.otherOptions"}}</label>
           <div class="input-group">
-            <button {{action "delete"}} class="btn btn-danger delete-event">{{t "eventForm.delete"}}</button>
+            <button type="button" {{action "delete"}} class="btn btn-danger delete-event">{{t "eventForm.delete"}}</button>
             &nbsp;
             <button type="button" {{action "exportToExcel"}} class="btn btn-default export-excel">{{t "eventForm.exportExcel"}}</button>
             {{#if event.isOffline}}
               &nbsp;
-              <button {{action "syncOnline"}} class="btn btn-success sync-online">{{t "eventForm.syncOnline"}}</button>
+              <button type="button" {{action "syncOnline"}} class="btn btn-success sync-online">{{t "eventForm.syncOnline"}}</button>
             {{/if}}
           </div>
         </div>
