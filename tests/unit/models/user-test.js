@@ -148,6 +148,51 @@ test("balances always sum to exactly zero, even when a split doesn't divide even
     assert.ok(Math.abs(total) < 0.000001, `balances should sum to zero, got ${total}`);
 });
 
+// regression test: settling a non-exact debt (e.g. bob's true 3.333...33
+// share) uses a settle-up transfer rounded to the nearest cent (3.33), so
+// the payoff leaves a genuine sub-cent leftover (-0.00333...) rather than
+// exact 0 - this used to display as "-0.00" (see user-balance-list-item)
+test("settling a non-exact debt with its rounded transfer amount results in exactly zero, not a tiny negative residual", function (assert) {
+    const store = this.store();
+    let alice;
+    let bob;
+    let carol;
+    let event;
+
+    run(() => {
+        event = store.createRecord("event", { name: "Test event" });
+        alice = this.subject({ id: "alice" });
+        bob = store.createRecord("user", { id: "bob", name: "Bob", event });
+        carol = store.createRecord("user", { id: "carol", name: "Carol", event });
+
+        const dinner = store.createRecord("transaction", {
+            name: "Dinner",
+            amount: 10,
+            payer: alice,
+            participants: [alice, bob, carol],
+        });
+
+        alice.set("event", event);
+        event.get("transactions").pushObject(dinner);
+    });
+
+    assert.equal(bob.get("balance"), -(10 / 3), "sanity check: bob's true share is a repeating decimal");
+
+    run(() => {
+        const settleUp = store.createRecord("transaction", {
+            name: "Settle up",
+            type: "transfer",
+            amount: 3.33, // the settle-up UI's rounded suggestion, not bob's exact 3.333...33 debt
+            payer: bob,
+            participants: [alice],
+        });
+
+        event.get("transactions").pushObject(settleUp);
+    });
+
+    assert.strictEqual(bob.get("balance"), 0, "settled up, should be exactly zero rather than -0.0033...");
+});
+
 test("it lets a transaction override a participant's factor just for itself", function (assert) {
     const store = this.store();
     let bob;

@@ -118,7 +118,15 @@ export default Model.extend(ModelMixin, {
             // -3.33 = 0.01, not 0) used to leave the group's balances not
             // summing to exactly zero. Round only where a balance is
             // actually displayed or turned into a real payment.
-            return paidMoney - owedMoney - itemizedOwed + depositCredit - directedDepositDebit;
+            const total = paidMoney - owedMoney - itemizedOwed + depositCredit - directedDepositDebit;
+
+            // a settle-up transfer's amount is itself rounded to the
+            // nearest cent (settlement-transfer-list.js), so paying it off
+            // can leave a genuine sub-cent leftover (e.g. a 3.333...33 debt
+            // settled with a 3.33 transfer leaves -0.00333...) rather than
+            // exact zero - snap anything that would display as "0.00"
+            // anyway to a real zero, so it never renders as "-0.00"
+            return Math.abs(total) < 0.005 ? 0 : total;
         }
     ),
 });
