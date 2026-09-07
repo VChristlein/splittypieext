@@ -58,7 +58,7 @@ test("it renders a settled (zero) balance as neutral, not negative or positive",
     this.render(hbs`{{user-balance-list-item user=user}}`);
 
     assert.equal(extraTrim(this.$().text()), "Tomasz 0.00 PLN", "shows 0.00, not -0.00");
-    assert.ok(this.$("tr span").hasClass("label-info"), "neutral class for a settled balance");
+    assert.ok(this.$("tr span").hasClass("label-primary"), "neutral class for a settled balance");
     assert.notOk(this.$("tr span").hasClass("label-success"), "not counted as positive");
     assert.notOk(this.$("tr span").hasClass("label-danger"), "not counted as negative");
 });
